@@ -1,117 +1,139 @@
-# Greenroom — Design System & UX
+# Greenroom — Design System
 
-Companion to `PRD.md`. The name **Greenroom** = the backstage room where performers
-prepare before going on stage. The product takes you from the greenroom (Study) → on stage
-(Spar) → the review notes (Debrief). The visual language leans theatrical and composed:
-calm dark "backstage", a warm spotlight accent, and clear evidentiary surfaces for facts.
+Visual language is **Cal.com-inspired**: clean, neutral, developer-grade SaaS. Sourced from
+the Cal `DESIGN.md` in [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/cal/DESIGN.md)
+(served at <https://getdesign.md/cal/design-md>) and applied to Greenroom's product. White
+canvas, near-black CTAs, generous whitespace, soft-rounded cards, hairline borders over
+shadows. Hierarchy comes from **surface treatment, not color intensity** — "confident, not
+shouting." This restraint suits a serious finance tool: credible, data-forward, calm.
 
-## 1. Design principles
+## 1. Principles
 
-1. **Facts are the hero.** Every fact and fact-check is visibly **sourced** — a citation is
-   a first-class UI element, never an afterthought.
-2. **Calm under pressure.** The interface is quiet so the conversation can be loud. Minimal
-   chrome during Spar; one clear focal action.
-3. **Evidence over decoration.** A flagged bluff with a working source link is worth more
-   than any animation. Polish serves credibility.
-4. **Demo-legible.** A judge across the room can read the screen and instantly see "real
-   data" + "voice".
+1. **Facts are the hero.** Every fact / fact-check is visibly **sourced** — a citation is a
+   first-class element, never decoration.
+2. **Calm under pressure.** Quiet interface so the conversation can be loud. Minimal chrome
+   during Spar; one clear focal action.
+3. **Surface, not shout.** Establish hierarchy with white vs. light-gray surfaces and
+   hairline borders rather than heavy color or shadow (Cal philosophy).
+4. **Demo-legible.** A judge across the room instantly reads "real cited data" + "voice."
 
-## 2. Fluid responsive sizing (REQUIRED — Retina/wide-display safe)
+## 2. Fluid responsive sizing (REQUIRED)
 
-Per global rules, never use fixed `px` font sizes. Establish a viewport-scaled root and use
-`rem` everywhere.
+Global rule overrides any fixed px. Keep the viewport-scaled root + `rem`; Cal's px tokens
+below are given with their `rem` equivalents (÷16).
 
 ```css
 html { font-size: clamp(16px, 1.15vw, 24px); }
-/* body text ≥ 1rem · small/labels 0.8rem · headings ≥ 1.5rem */
+/* body ≥ 1rem · small/labels 0.8rem · headings ≥ 1.5rem */
 ```
+- Containers: `width: min(90%, 75rem)` (~1200px Cal max content width).
+- All spacing, padding, radii in `rem`. No fixed px font sizes.
 
-- Containers: `width: min(90%, 64rem)` (not fixed px max-widths).
-- Spacing, padding, radii: `rem` units.
-- Tailwind: configure the base on `html`; prefer `rem`-based scale; avoid `text-xs` hardcodes
-  for primary content.
+## 3. Color tokens (Cal palette)
 
-## 3. Color tokens
-
-Dark, theatrical base with a warm spotlight accent and a clear "verified" green.
+Monochrome by default; the only chromatic exceptions are the two **evidence** colors
+(verified / flag), kept muted to respect Cal's restraint.
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#0E1116` | App background (backstage) |
-| `--surface` | `#171B22` | Cards, panels |
-| `--surface-2` | `#1F242D` | Raised / hover |
-| `--text` | `#E8EAED` | Primary text |
-| `--text-muted` | `#9AA3AF` | Secondary text, labels |
-| `--accent` | `#E8B04B` | Spotlight — primary actions, "on stage" |
-| `--verified` | `#3FB950` | Verified facts, passed checks, source chips |
-| `--flag` | `#E5534B` | Bluff flags, failed checks |
-| `--border` | `#2A303A` | Hairlines |
+| `--canvas` | `#FFFFFF` | Default page surface |
+| `--surface` | `#F5F5F5` | Cards / feature containers |
+| `--surface-product` | `#FFFFFF` + hairline border | "Product" surfaces: live transcript, fact cards |
+| `--ink` | `#111111` | Primary text **and** primary (black) CTA fill |
+| `--muted` | `#6B7280` | Secondary text, labels |
+| `--border` | `#E5E5E5` | Hairlines (preferred over shadows) |
+| `--footer` | `#101010` | The **only** dark surface — used once, closes the page |
+| `--verified` | `#2E7D32` (muted green) | Sourced/correct facts, source chips, passed checks |
+| `--flag` | `#C62828` (muted red) | Bluff flags, failed checks |
 
-Severity for flags: high `--flag`, medium `#E3A008`, low `--text-muted`.
+Flag severity: high `--flag` · medium `#B45309` · low `--muted`.
 
-## 4. Typography
+## 4. Typography (Cal pairing)
 
-| Role | Font | Size |
+Strict separation: **never** body copy in the display face, **never** a headline in Inter.
+
+| Role | Font | Spec |
 |---|---|---|
-| Display / headings | **Fraunces** or **Playfair Display** (a theatrical serif) | `clamp(1.8rem, 3vw, 3rem)` |
-| UI / body | **Inter** | `1rem` base |
-| Facts / sources / transcript | **IBM Plex Mono** | `0.9rem` |
+| Display / headings | **Cal Sans**, weight 600, letter-spacing `-0.04em` (geometric, precise) | `clamp(1.8rem, 3vw, 3rem)` |
+| UI / body / buttons / nav | **Inter**, weights 400–600 | `1rem` base |
+| Facts / sources / transcript | **IBM Plex Mono** (Greenroom addition — signals "data/evidence") | `0.9rem` |
 
-Mono for facts and transcripts signals "data/evidence" and aids scan-ability.
+Fallback if Cal Sans unavailable: **Inter 600 with `-0.04em`** tracking, or **Manrope 700**.
 
-## 5. Screens & flows
+## 5. Spacing scale (Cal 4px base → rem)
+
+| Token | px | rem |
+|---|---|---|
+| `xxs` | 4 | 0.25rem |
+| `xs` | 8 | 0.5rem |
+| `sm` | 12 | 0.75rem |
+| `md` | 16 | 1rem |
+| `lg` | 24 | 1.5rem |
+| `xl` | 32 | 2rem |
+| `xxl` | 48 | 3rem |
+| `section` | 96 | 6rem |
+
+- **Section rhythm:** `section` (6rem) vertical band spacing.
+- **Card padding:** `xl` (2rem) for feature/primary cards; `lg` (1.5rem) for secondary.
+- **Gutters:** `lg` (1.5rem) between cards in grids; `md` (1rem) inside footer columns.
+
+## 6. Radius, borders, shadows
+
+- **Card radius:** ~12px → `0.75rem` (soft-rounded).
+- **Borders:** hairline `--border`, 1px. Prefer borders to shadows for separation.
+- **Shadows:** minimal/none; only a faint lift on interactive overlays if needed.
+
+## 7. Components (Cal philosophy → Greenroom)
+
+Embed **real UI fragments** inside cards (live transcript, fact cards, score) rather than
+illustrations — Cal's "show the product in the card" approach.
+
+- `Button` — primary: `--ink` fill, white text; secondary: white + `--border` hairline.
+- `nav-pill-group` — Cal's signature pill-radius wrapper; use for scenario/mode switching.
+- `SourceChip` — value + outbound citation; `--verified` text/border. Used wherever a fact appears.
+- `FactCard` — grouped facts on `--surface`; source chips inline.
+- `MicButton` — push-to-talk with speaking state (neutral, no loud accent).
+- `TranscriptLine` — role-tagged line on `--surface-product`; optional `FlagChip`.
+- `FlagChip` — severity-colored; expands to `issue · correctValue · source`.
+- `ScorePanel` — overall + sub-scores; numbers in the mono face.
+- `GraphView` — react-force-graph wrapper, neutral palette (cut-able).
+
+## 8. Screens & flows
 
 ```
 Landing ──► Study ──► Spar ──► Debrief
             (facts)   (voice)  (sourced flags + score)
 ```
 
-### 5.1 Landing
-- Hero line (the product one-liner) + a single scenario card: **"IB / Finance
-  Interview"**. Curated target picker (1–2 demo companies as prominent cards; arbitrary
-  input hidden/secondary for the demo).
-- CTA: **"Enter the greenroom →"** → Study.
+### 8.1 Landing
+- Cal Sans hero with the product one-liner; generous whitespace on white canvas. A single
+  scenario card (**"IB / Finance Interview"**) on `--surface`; curated target picker as
+  prominent cards. CTA (black `--ink` button): **"Start →"**.
 
-### 5.2 Study (the greenroom)
-- **Fact pack cards:** grouped (Overview · People · Ownership/Funding · Recent activity).
-  Each fact shows value + a small **source chip** (`--verified`) linking out. Mono font.
-- **Knowledge graph** (cut-able): force-directed entity/relationship view; click an edge →
-  source. If cut, this section is simply absent and cards carry the weight.
-- CTA: **"Go on stage →"** → Spar.
+### 8.2 Study
+- **Fact-pack cards** grouped (Overview · People · Ownership/Funding · Recent activity) on
+  `--surface`, each fact value in mono with a `SourceChip`. **Knowledge graph** (cut-able)
+  on a white `--surface-product` panel with hairline border. CTA: **"Go to interview →"**.
 
-### 5.3 Spar (on stage)
-- Minimal, focused. Center: a **mic / talk affordance** (push-to-talk) with a live
-  speaking indicator. Spotlight (`--accent`) framing.
-- Live transcript streams in a side rail (muted styling so it doesn't distract).
-- Single **"End interview"** action → Debrief. No other chrome.
-- Subtle "grounded in N cited facts" badge to keep the moat visible.
+### 8.3 Spar
+- Minimal, white canvas. Centered `MicButton` (push-to-talk) with a quiet speaking
+  indicator. Live transcript on a `--surface-product` rail (muted, non-distracting). Single
+  **"End interview"** action. A small "grounded in N cited facts" note keeps the moat visible.
 
-### 5.4 Debrief (the notes)
-- **Score** at top (overall + a couple of sub-scores e.g. Accuracy / Composure).
-- **Transcript** with inline **flag chips** on bluffed lines: hover/expand →
-  `issue · correctValue · source link`. Verified-correct claims optionally get a quiet
-  `--verified` tick.
-- "X bluffs caught, all sourced" summary line — the punchline of the demo.
+### 8.4 Debrief
+- **ScorePanel** at top (overall + Accuracy / Composure). Transcript on `--surface-product`
+  with inline `FlagChip`s on bluffed lines → `issue · correctValue · source`. Correct claims
+  get a quiet `--verified` tick. Summary line: "X bluffs caught, all sourced" — the punchline.
+- Optional `--footer` (`#101010`) band closes the page (the one dark surface).
 
-## 6. Components
+## 9. Motion (restrained, Cal-like)
 
-- `SourceChip` — value + outbound citation (verified green). Used everywhere a fact appears.
-- `FactCard` — grouped facts with source chips.
-- `MicButton` — push-to-talk with speaking state.
-- `TranscriptLine` — role-tagged line; optional `FlagChip`.
-- `FlagChip` — severity-colored; expands to issue/correct/source.
-- `ScorePanel` — overall + sub-scores.
-- `GraphView` — react-force-graph wrapper (cut-able).
+- Cross-screen: 150–200ms fade/slide. No gratuitous motion during Spar.
+- Speaking indicator: gentle pulse (neutral, not colored).
+- Debrief flags reveal with a short stagger so caught bluffs land one by one (demo beat).
 
-## 7. Motion (restrained)
+## 10. Accessibility / venue realities
 
-- Cross-screen: 150–200ms fade/slide. Spotlight "lights up" on entering Spar.
-- Live speaking indicator: gentle pulse on `--accent`.
-- Flag reveal in Debrief: short stagger so caught bluffs land one by one (demo beat).
-- No gratuitous motion during Spar — the voice is the show.
-
-## 8. Accessibility / venue realities
-
-- High contrast on the dark base (text ≥ `#E8EAED`).
+- High contrast on white (`--ink` on `--canvas`).
 - Push-to-talk (not always-listening) for a loud venue.
-- Source links keyboard-focusable; flags have text labels, not color alone.
+- Source links keyboard-focusable; flags carry text labels, not color alone.
