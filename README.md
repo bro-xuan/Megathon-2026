@@ -41,6 +41,8 @@ ANTHROPIC_API_KEY=...                # console.anthropic.com (server-only)
 # optional if not using Vapi-managed providers:
 ELEVENLABS_API_KEY=...
 DEEPGRAM_API_KEY=...
+# optional — only for the M5 Mollie paywall stretch (use the test_ key):
+MOLLIE_API_KEY=test_...               # Mollie Dashboard → Developers → API keys
 ```
 
 ### De-risk first (do before building UI)

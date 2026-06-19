@@ -38,7 +38,8 @@ Read this first. Then `PRD.md` (what/why + architecture), `DESIGN.md` (UI), `TAS
 
 ## Env vars (see `.env.example`)
 Server-only: `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `ANTHROPIC_API_KEY`,
-optional `ELEVENLABS_API_KEY`, `DEEPGRAM_API_KEY`.
+optional `ELEVENLABS_API_KEY`, `DEEPGRAM_API_KEY`,
+optional `MOLLIE_API_KEY` (test key, only for the M5 paywall stretch).
 Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
 ## Don't

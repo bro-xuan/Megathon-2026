@@ -7,6 +7,14 @@ Definition of Done (DoD). Update statuses as you go: `[ ]` todo · `[~]` in prog
 **Cut order if behind:** M4 graph → M5 polish extras → keep M0–M3 sacred (M3 is the
 differentiator). Log decisions/gotchas in the bottom of `CLAUDE.md`.
 
+## Prerequisites (track eligibility)
+- [x] **Mollie account created** — this alone qualifies us for the **Startup track** (the
+      main €10K cash + €15K Codex prize). Mollie *integration is optional* and not required
+      for the main prize.
+- [ ] Cala, Vapi, Anthropic API keys in `.env.local` (see `CLAUDE.md` / `.env.example`).
+- [ ] **Must ship a live URL by the Sunday deadline** (no deploy → no main prize) + post the
+      Friday-night 60s video, repo link, and baseline metrics.
+
 ---
 
 ## M0 — Scaffold & de-risk (~2h) ⭐ do first
@@ -57,6 +65,16 @@ Prove both external APIs work *before* building any UI.
 - [ ] Deploy to Vercel; set env vars in the dashboard.
 - [ ] Script the bluffs in advance and rehearse the demo end to end.
 - **DoD:** full flow runs on the Vercel URL **and** the recorded fallback works offline.
+
+### M5 (optional) — Mollie paywall ✂️ cut freely
+Only if M0–M3 are solid. A Business/Distribution-score booster (judging: Business 15% +
+Distribution 10%); also unlocks the Mollie bounty (€20K *processing-volume credit*, not
+cash). The account already qualified us, so losing this costs nothing.
+- [ ] **Mollie test-mode hosted checkout** as a paywall — e.g. *"first mock interview free →
+      €9 for unlimited sessions."* Use the **Test API key** (`test_...` from Mollie Dashboard
+      → Developers → API keys), or a no-code **Payment Link** if time is tight.
+- [ ] `MOLLIE_API_KEY` server-side only; payment creation via an API route, never the client.
+- **DoD:** clicking "Unlock" opens a Mollie hosted checkout and a test payment completes.
 
 ---
 
