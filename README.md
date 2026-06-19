@@ -13,8 +13,7 @@ Built for **Megathon 2026** — targeting the Cala.ai and Vapi prizes.
 
 | File | What |
 |---|---|
-| `PRODUCT.md` | Original product vision |
-| `PRD.md` | Buildable product spec + architecture + detailed tech stack |
+| `PRD.md` | Vision + buildable spec + architecture + detailed tech stack |
 | `DESIGN.md` | Design system + UX flows |
 | `TASKS.md` | Timeboxed milestone board |
 | `CLAUDE.md` | Repo instructions for AI sessions |

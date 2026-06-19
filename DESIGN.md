@@ -67,7 +67,7 @@ Landing ──► Study ──► Spar ──► Debrief
 ```
 
 ### 5.1 Landing
-- Hero line (the PRODUCT.md one-liner) + a single scenario card: **"IB / Finance
+- Hero line (the product one-liner) + a single scenario card: **"IB / Finance
   Interview"**. Curated target picker (1–2 demo companies as prominent cards; arbitrary
   input hidden/secondary for the demo).
 - CTA: **"Enter the greenroom →"** → Study.

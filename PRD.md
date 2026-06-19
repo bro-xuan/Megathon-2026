@@ -4,8 +4,7 @@
 > facts — so when you bluff, it catches you, exactly like real life.
 
 **Event:** Megathon 2026 · **Build window:** ~1.5 days · **Sponsors targeted:** Cala.ai
-(data moat) + Vapi (voice). See `PRODUCT.md` for the original vision; this PRD is the
-buildable spec.
+(data moat) + Vapi (voice). This is the single source of truth — vision *and* buildable spec.
 
 ---
 
@@ -31,7 +30,10 @@ flagged and **sourced**.
 voice. It handles the technical drills a generic LLM already knows, but its edge is the
 **markets & company knowledge** that sinks candidates: "Pitch me a stock" → it pulls the
 company's real profile (founders, owners, funders, recent activity) and grills you,
-catching you when you're wrong.
+catching you when you're wrong:
+
+- *"You said they're founder-led — their CEO isn't a founder. Are you sure?"*
+- *"You pitched them as mid-market, but they're 5,000 employees. Walk me through that."*
 
 ## 3. Product critique & rationale (why this wins, and what could kill it)
 
