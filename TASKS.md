@@ -4,8 +4,9 @@ Milestone-based, timeboxed for ~1.5 build days. Each milestone ends **demo-able*
 Definition of Done (DoD). Update statuses as you go: `[ ]` todo · `[~]` in progress ·
 `[x]` done.
 
-**Cut order if behind:** M4 graph → M5 polish extras → keep M0–M3 sacred (M3 is the
-differentiator). Log decisions/gotchas in the bottom of `CLAUDE.md`.
+**Cut order if behind:** M6 Mollie paywall → M4 graph → M5 polish extras → keep M0–M3
+sacred (M3 is the differentiator). **Mollie integration is the LAST step — only after the
+whole product is built.** Log decisions/gotchas in the bottom of `CLAUDE.md`.
 
 ## Prerequisites (track eligibility)
 - [x] **Mollie account created** — this alone qualifies us for the **Startup track** (the
@@ -66,8 +67,9 @@ Prove both external APIs work *before* building any UI.
 - [ ] Script the bluffs in advance and rehearse the demo end to end.
 - **DoD:** full flow runs on the Vercel URL **and** the recorded fallback works offline.
 
-### M5 (optional) — Mollie paywall ✂️ cut freely
-Only if M0–M3 are solid. A Business/Distribution-score booster (judging: Business 15% +
+### M6 (optional, LAST STEP) — Mollie paywall ✂️ cut freely
+**Do this only after the whole product is built and working** — integrating Mollie is the
+very last thing we touch. A Business/Distribution-score booster (judging: Business 15% +
 Distribution 10%); also unlocks the Mollie bounty (€20K *processing-volume credit*, not
 cash). The account already qualified us, so losing this costs nothing.
 - [ ] **Mollie test-mode hosted checkout** as a paywall — e.g. *"first mock interview free →

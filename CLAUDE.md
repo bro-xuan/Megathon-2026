@@ -47,6 +47,7 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 - Don't query Cala on every conversational turn.
 - Don't ship secret keys to the browser.
 - Don't let the graph (M4) jeopardize M0–M3.
+- Don't touch Mollie until the full product works — the paywall (M6) is the **last** step.
 
 ## Decision log & API quirks (append newest at top)
 
