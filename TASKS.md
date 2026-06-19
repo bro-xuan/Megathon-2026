@@ -2,10 +2,10 @@
 
 Milestone-based, timeboxed for ~1.5 build days. Each milestone ends **demo-able** and has a
 Definition of Done (DoD). Update statuses as you go: `[ ]` todo · `[~]` in progress ·
-`[x]` done. Log decisions/gotchas in `MEMORY.md`.
+`[x]` done.
 
 **Cut order if behind:** M4 graph → M5 polish extras → keep M0–M3 sacred (M3 is the
-differentiator).
+differentiator). Log decisions/gotchas in the bottom of `CLAUDE.md`.
 
 ---
 
@@ -53,14 +53,14 @@ Prove both external APIs work *before* building any UI.
 - [ ] Apply `DESIGN.md` tokens/typography; fluid `clamp()` root font verified on a wide
       display.
 - [ ] **Mock/fallback mode** — canned fact pack + recorded call + precomputed Debrief
-      (network-off safe). See `DEMO.md`.
+      (network-off safe) so a venue/network failure can't kill the demo.
 - [ ] Deploy to Vercel; set env vars in the dashboard.
-- [ ] Rehearse the `DEMO.md` script end to end.
+- [ ] Script the bluffs in advance and rehearse the demo end to end.
 - **DoD:** full flow runs on the Vercel URL **and** the recorded fallback works offline.
 
 ---
 
 ## Definition of Done (global)
 A milestone is done only when: the tree still runs, the DoD scenario passes manually, and
-any new decision/gotcha is recorded in `MEMORY.md`. Commit at each milestone with a
+any new decision/gotcha is recorded in the `CLAUDE.md` log. Commit at each milestone with a
 conventional message (`feat:`, `fix:`, `chore:`).

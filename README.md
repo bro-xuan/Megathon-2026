@@ -14,12 +14,9 @@ Built for **Megathon 2026** — targeting the Cala.ai and Vapi prizes.
 | File | What |
 |---|---|
 | `PRODUCT.md` | Original product vision |
-| `PRD.md` | Buildable product spec + detailed tech stack |
-| `ARCHITECTURE.md` | System design, data flow, route map |
+| `PRD.md` | Buildable product spec + architecture + detailed tech stack |
 | `DESIGN.md` | Design system + UX flows |
 | `TASKS.md` | Timeboxed milestone board |
-| `DEMO.md` | Demo script + fallback plan |
-| `MEMORY.md` | Decision log + API quirks |
 | `CLAUDE.md` | Repo instructions for AI sessions |
 
 ## Stack
@@ -63,4 +60,4 @@ interview) → **Debrief** (transcript with sourced bluff-flags + score).
 Pre-fetch a cited **fact pack** from Cala → inject as ground-truth into the Vapi
 interviewer → after the call, a Claude pass compares your transcript to the fact pack and
 emits **sourced fact-check flags**. (Grounding before the call, scoring after — avoids
-Cala's rate limit and Vapi's per-turn latency budget.) See `ARCHITECTURE.md`.
+Cala's rate limit and Vapi's per-turn latency budget.) See `PRD.md` §9.

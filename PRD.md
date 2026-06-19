@@ -46,7 +46,7 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 |---|---|
 | Live fact-check latency + Cala's 10 req/min free-tier cap | **Pre-fetch a cited fact pack** before the call; Cala is hit ~1–3×/session, not per turn. |
 | Scope creep (knowledge graph) eats the timebox | Graph is the **last** slice with a hard cut line → degrades to card view. |
-| Voice demo fragility in a loud venue | Headset + push-to-talk + **recorded/mock fallback mode** (`DEMO.md`). |
+| Voice demo fragility in a loud venue | Headset + push-to-talk + **recorded/mock fallback mode**. |
 | "Catch the bluff" magic depends on fact-pack coverage | Curate **1–2 hand-picked demo companies** with rich Cala coverage; don't accept arbitrary input on stage. |
 | Wispr Flow API is partnership-gated | **Dropped** as a dependency; used only as a dictation tool while coding. |
 
@@ -119,15 +119,60 @@ $10 free signup credit; timestamped transcript via `GET /call/{id}`; per-call co
 **Env vars:** `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `NEXT_PUBLIC_VAPI_PUBLIC_KEY`,
 `ANTHROPIC_API_KEY`, optional `ELEVENLABS_API_KEY` / `DEEPGRAM_API_KEY`.
 
-## 9. Architecture summary
+## 9. Architecture
 
-See `ARCHITECTURE.md` for detail. Three phases:
+**Principle: grounding before the call, scoring after.** Live per-turn Cala lookups are
+fragile (free tier = 10 req/min; Vapi tool calls must return <1s). Instead, pre-fetch a
+cited fact pack and inject it into the interviewer prompt; do structured fact-checking in a
+reliable post-call Claude pass.
+
+**Three phases:**
 1. **Pre-call:** `/api/factpack` queries Cala → normalized cited fact pack → cached JSON →
    injected into the Vapi interviewer's system prompt as ground truth.
 2. **Live (Spar):** Vapi assistant challenges claims against injected facts; transcript
-   captured via Web SDK events.
-3. **Post-call (Debrief):** `/api/call/[id]` pulls timestamped transcript; `/api/debrief`
-   runs Claude to compare statements vs fact pack → structured, sourced flags + score.
+   captured via Web SDK `message` events.
+3. **Post-call (Debrief):** `/api/call/[id]` pulls the timestamped transcript;
+   `/api/debrief` runs Claude to compare statements vs fact pack → structured, sourced
+   flags + score.
+
+**Route / file map:**
+```
+app/page.tsx                  Landing: pick scenario (IB) + target
+app/study/[target]/page.tsx   Study: cited fact-pack cards + knowledge graph
+app/spar/[target]/page.tsx    Spar: Vapi call UI (mic, live transcript)
+app/debrief/[callId]/page.tsx Debrief: transcript w/ sourced flags + score
+app/api/factpack/route.ts     GET ?target= → Cala → normalized cited pack (cached)
+app/api/call/[id]/route.ts    GET → proxy Vapi GET /call/{id} (timestamped transcript)
+app/api/debrief/route.ts      POST {transcript,target} → Claude → {flags, scores}
+lib/cala.ts                   Cala REST client (server-only; X-API-KEY)
+lib/vapi-assistant.ts         Interviewer persona + fact-pack injection
+lib/factpack.ts               Normalize Cala → FactPack; JSON cache
+lib/anthropic.ts              Anthropic client for the debrief pass
+data/factpacks/*.json         Cached fact packs (one per demo company)
+scripts/test-cala.ts          M0 smoke test (entity_search + knowledge_search)
+scripts/test-vapi.ts          M0 smoke test (boot a trivial web call)
+```
+
+**Core types:**
+```ts
+type Fact = { claim: string; value: string; sourceUrl: string; sourceName?: string };
+type Relationship = { type: string; from: string; to: string; sourceUrl?: string };
+type FactPack = { target: string; entityId: string; summary: string;
+                  facts: Fact[]; relationships: Relationship[]; fetchedAt: string };
+type FactCheckFlag = { quote: string; issue: string; correctValue: string;
+                       sourceUrl: string; severity: "low" | "medium" | "high" };
+```
+
+**Fact-pack pipeline (pre-call):** target name → Cala `entity_search` (→ UUID) →
+`retrieve_entity` (profile + relationships) + `knowledge_search` (cited facts) → normalize
+(`facts[].sourceUrl` from `origins[].source.url`) → cache to `data/factpacks/<target>.json`.
+
+**Keys:** `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `ANTHROPIC_API_KEY` are server-only; only
+`NEXT_PUBLIC_VAPI_PUBLIC_KEY` reaches the browser. All Cala traffic goes via `/api/factpack`.
+
+**Fallbacks:** thin Cala coverage → swap demo company; Vapi/network fail → mock mode
+(canned pack + recorded call); Anthropic-in-Vapi finicky → switch interviewer to gpt-4o;
+graph unfinished → Study keeps the card view.
 
 ## 10. Milestones
 
@@ -136,5 +181,6 @@ See `TASKS.md`. M0 de-risk both APIs → M1 fact pack → M2 voice loop → M3 f
 
 ## 11. Demo narrative
 
-See `DEMO.md` for the 3-minute script + fallback plan. Arc: "Here's the company (cited
-facts) → now interview me → watch me bluff → it catches me, with the source."
+Arc: "Here's the company (cited facts) → now interview me → watch me bluff → it catches me,
+with the source." Curate 1–2 demo companies and script the bluffs in advance; keep a
+mock/recorded fallback so a venue/network/voice failure can't kill the pitch.

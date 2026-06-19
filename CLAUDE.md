@@ -1,8 +1,7 @@
 # CLAUDE.md — Greenroom (repo instructions for AI sessions)
 
-Read this first. Then `PRD.md` (what/why), `ARCHITECTURE.md` (how), `TASKS.md` (what's
-next), `MEMORY.md` (decisions/gotchas). Update `MEMORY.md` whenever you make a decision or
-hit an API quirk.
+Read this first. Then `PRD.md` (what/why + architecture), `DESIGN.md` (UI), `TASKS.md`
+(what's next). Record any new decision or API quirk in the log at the bottom of this file.
 
 ## What this is
 **Greenroom** — a voice-based mock-interviewer (hero: IB/finance interview) grounded in
@@ -28,7 +27,8 @@ hit an API quirk.
   units, `min(90%, …)` widths. No fixed `px` font sizes. (See `DESIGN.md`.)
 - Conventional commits (`feat:`, `fix:`, `chore:`). Commit at each milestone. Work on `main`
   for speed; branch only for risky spikes.
-- Keep mock/fallback mode (`?mock=1`) a thin branch off the real path (see `DEMO.md`).
+- Keep mock/fallback mode (`?mock=1`) a thin branch off the real path (canned fact pack +
+  recorded call) so a venue/network failure can't kill the demo.
 
 ## Commands (fill in once scaffolded)
 - Dev: `npm run dev`
@@ -46,3 +46,25 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 - Don't query Cala on every conversational turn.
 - Don't ship secret keys to the browser.
 - Don't let the graph (M4) jeopardize M0–M3.
+
+## Decision log & API quirks (append newest at top)
+
+**Decisions (2026-06-19):** Cala + Vapi are load-bearing (both prizes). Wispr Flow dropped
+(API partnership-gated). Fact-check = pre-fetched cited fact pack + post-call Claude pass
+(not live per-turn). Scope = Spar + Fact-check + Study graph, with the graph as the cut
+line. Stack = Next.js 15 + TS + Tailwind, Claude interviewer via Vapi, Vercel.
+
+**Cala (verify if stale):** base `https://api.cala.ai`, header `X-API-KEY`. `knowledge_search`
+(`POST /v1/knowledge/search`) returns cited prose + entities — citations at
+`context[].origins[].source.{name,url}`; prefer it when sources matter. `entity_search`
+(`POST /v1/entities` → UUID), `retrieve_entity` (`POST /v1/entities/{id}` → profile +
+relationships). Free tier 100 credits/mo, **10 req/min** (429 on limit) → cache packs.
+Console `console.cala.ai`, docs `docs.cala.ai`.
+
+**Vapi (verify if stale):** Web SDK `@vapi-ai/web` — browser uses public key, private key
+server-side. `vapi.start(config, overrides)`; per-call context via
+`assistantOverrides.variableValues` (nested). Custom tools POST to `server.url` <1s in-turn
+(we avoid via pre-fetch). LLMs Anthropic/OpenAI/custom; STT Deepgram, TTS ElevenLabs; BYO
+keys → $0 passthrough; $10 free credit. Timestamped transcript via `GET /call/{id}`.
+
+**Gotchas:** _(append as discovered)_
