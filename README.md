@@ -1,7 +1,7 @@
 # Greenroom
 
-> A voice-based practice partner for high-stakes conversations that knows the real facts —
-> so when you bluff, it catches you, exactly like real life.
+> A voice-native partner for high-stakes finance, grounded in real, cited data — it catches
+> your bluffs when you practice, and briefs you with dense market intelligence when you're live.
 
 Hero use case: a live **voice mock IB/finance interview** where the AI interviewer is
 grounded in **cited, real-company data** (via **Cala.ai**) and challenges you over voice

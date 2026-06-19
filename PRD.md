@@ -1,7 +1,7 @@
 # Greenroom — Product Requirements Document
 
-> A voice-based practice partner for high-stakes conversations that knows the real
-> facts — so when you bluff, it catches you, exactly like real life.
+> A voice-native partner for high-stakes finance, grounded in real, cited data — it catches
+> your bluffs when you practice, and briefs you with dense market intelligence when you're live.
 
 **Event:** Megathon 2026 · **Build window:** ~1.5 days · **Sponsors targeted:** Cala.ai
 (data moat) + Vapi (voice). This is the single source of truth — vision *and* buildable spec.
