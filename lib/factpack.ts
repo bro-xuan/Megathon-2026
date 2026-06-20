@@ -50,36 +50,79 @@ function bestSource(origins: { source: CalaSource }[] = []): CalaSource | undefi
   return deep ?? sources[0];
 }
 
-/** Cheap keyword classifier → DESIGN.md Study groups. */
+/** Fallback keyword classifier → DESIGN.md Study groups (used only when no lead label matches). */
 function classify(text: string): FactCategory {
   const t = text.toLowerCase();
-  if (/(ceo|founder|co-found|chief|president|board|hired|executive|leadership)/.test(t)) return 'people';
-  if (/(valuation|invest|funding|round|series [a-z]|raised|owner|stake|acqui|ipo|shareholder|capital)/.test(t)) return 'ownership';
-  if (/(2026|recently|latest|last month|announced|launched|new |unveiled)/.test(t)) return 'recent';
+  if (/(ceo|found(ed|er|ing)|co-found|chief|president|board|hired|executive|leadership)/.test(t)) return 'people';
+  if (/(valuation|valued|invest|funding|round|series [a-z]|raised|owner|stake|acqui|ipo|shareholder|capital)/.test(t)) return 'ownership';
+  if (/(2026|recently|latest|last month|announced|launched|unveiled|\bnew\b)/.test(t)) return 'recent';
   return 'overview';
 }
 
-/** Short topic label for a fact (the FactCard heading). */
-function labelFor(category: FactCategory, text: string): string {
+// Topic labels for the FactCard heading. We pick the topic the sentence LEADS with
+// (earliest keyword by position), not a fixed priority — so "Key investors include…"
+// reads as Investors, not Founders, and a founding sentence reads as Founders, not CEO.
+const LABEL_RULES: [RegExp, string][] = [
+  [/valuation|valued|\bworth\b/, 'Valuation'],
+  [/\bipo\b|public offering|go(ing)? public|sec paperwork/, 'IPO'],
+  [/found(ed|er|ing)|co-found/, 'Founders'],
+  [/chief executive|\bceo\b/, 'CEO'],
+  [/acqui/, 'Acquisitions'],
+  [/investor|backed by|\bstake\b|shareholder/, 'Investors'],
+  [/funding|series [a-z]|raised|\bround\b/, 'Funding'],
+  [/revenue|burn|\bloss(es)?\b|profit|\bcash\b/, 'Financials'],
+  [/employee|headcount|staff|engineers/, 'Headcount'],
+  [/headquarter|based in/, 'Headquarters'],
+  [/competitor|rival/, 'Competitors'],
+  [/launched|unveiled|announced|deployed/, 'Recent'],
+];
+
+// Keep each heading and its Study section consistent: derive the group from the label.
+const LABEL_CATEGORY: Record<string, FactCategory> = {
+  Valuation: 'ownership', IPO: 'ownership', Investors: 'ownership', Funding: 'ownership',
+  Acquisitions: 'ownership', Financials: 'ownership',
+  Founders: 'people', CEO: 'people', Headcount: 'people',
+  Headquarters: 'overview', Competitors: 'overview',
+  Recent: 'recent',
+};
+
+const CATEGORY_LABEL: Record<FactCategory, string> = {
+  overview: 'Overview',
+  people: 'People',
+  ownership: 'Ownership',
+  recent: 'Recent',
+};
+
+/** Lead-topic heading for a fact (earliest matching keyword), or null if nothing matches. */
+function leadLabel(text: string): string | null {
   const t = text.toLowerCase();
-  if (/valuation|valued/.test(t)) return 'Valuation';
-  if (/ipo/.test(t)) return 'IPO';
-  if (/ceo|chief executive/.test(t)) return 'CEO';
-  if (/founder|co-found/.test(t)) return 'Founders';
-  if (/acqui/.test(t)) return 'Acquisitions';
-  if (/funding|series [a-z]|raised|round/.test(t)) return 'Funding';
-  if (/revenue|burn|loss|profit/.test(t)) return 'Financials';
-  if (/employee|headcount|staff/.test(t)) return 'Headcount';
-  if (/headquarter|based in/.test(t)) return 'Headquarters';
-  if (/investor|backed|stake/.test(t)) return 'Investors';
-  if (/competitor|rival/.test(t)) return 'Competitors';
-  const map: Record<FactCategory, string> = {
-    overview: 'Overview',
-    people: 'People',
-    ownership: 'Ownership',
-    recent: 'Recent',
+  let best: string | null = null;
+  let bestIdx = Infinity;
+  for (const [re, label] of LABEL_RULES) {
+    const m = t.match(re);
+    if (m && m.index !== undefined && m.index < bestIdx) {
+      bestIdx = m.index;
+      best = label;
+    }
+  }
+  return best;
+}
+
+/** Heading + Study group for a fact, kept consistent with each other. */
+function topicFor(text: string): { claim: string; category: FactCategory } {
+  const lead = leadLabel(text);
+  if (lead) return { claim: lead, category: LABEL_CATEGORY[lead] ?? 'overview' };
+  const category = classify(text);
+  return { claim: CATEGORY_LABEL[category], category };
+}
+
+/** Re-derive each fact's category + heading from its text — no Cala call. Apply to a cached
+ *  pack after a labeling-rule change so we don't re-query (and risk content drift / credits). */
+export function relabel(pack: FactPack): FactPack {
+  return {
+    ...pack,
+    facts: pack.facts.map((f) => ({ ...f, ...topicFor(f.value) })),
   };
-  return map[category];
 }
 
 export function normalize(target: string, raw: KnowledgeSearchResult, fetchedAt: string): FactPack {
@@ -94,13 +137,11 @@ export function normalize(target: string, raw: KnowledgeSearchResult, fetchedAt:
       const src = bestSource(origins);
       if (!src) return null; // only keep facts we can cite
       const value = ex.content.trim();
-      const category = classify(value);
       return {
-        claim: labelFor(category, value),
+        ...topicFor(value),
         value,
         sourceUrl: src.url,
         sourceName: src.name,
-        category,
       };
     })
     .filter((f): f is Fact => f !== null);
