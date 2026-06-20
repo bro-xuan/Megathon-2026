@@ -10,6 +10,7 @@
 
 import type { FactPack, PersonaProfile } from './types';
 import { buildPersonaTrack, type Track } from './tracks';
+import { pickInterviewerVoice, START_SPEAKING_PLAN, STOP_SPEAKING_PLAN } from './voice';
 
 /** Compact, cited fact list for prompt injection. */
 function factLines(pack: FactPack): string {
@@ -192,16 +193,12 @@ export function buildPersonaAssistant(
       smartFormat: true,
       keywords: track.grounded ? boostKeywords(packs) : IB_VOCAB.map((t) => `${t}:2`),
     },
-    startSpeakingPlan: {
-      waitSeconds: 0.4,
-      smartEndpointingPlan: { provider: 'livekit' as const },
-    },
-    stopSpeakingPlan: {
-      numWords: 0,
-      voiceSeconds: 0.2,
-      backoffSeconds: 1,
-    },
-    ...(opts.voiceId ? { voice: { provider: '11labs' as const, voiceId: opts.voiceId } } : {}),
+    startSpeakingPlan: START_SPEAKING_PLAN,
+    stopSpeakingPlan: STOP_SPEAKING_PLAN,
+    // Always attach a real voice (Aura-2 by default, keyed on the persona slug so each distilled
+    // person sounds distinct; ElevenLabs when opts.voiceId is provided). No voice block → Vapi's
+    // robotic default, which is what we're fixing.
+    voice: pickInterviewerVoice(profile.slug, opts.voiceId),
   };
 }
 
@@ -235,19 +232,11 @@ export function buildAssistant(
     // Turn-taking. Without these Vapi falls back to a fixed silence timer, which is why the
     // interviewer felt like it didn't notice you stopped and replied late. smartEndpointingPlan
     // is an ML turn detector (mid-sentence pause vs. done talking); stopSpeakingPlan lets the
-    // candidate barge in.
-    startSpeakingPlan: {
-      waitSeconds: 0.4,
-      smartEndpointingPlan: { provider: 'livekit' as const },
-    },
-    stopSpeakingPlan: {
-      numWords: 0,
-      voiceSeconds: 0.2,
-      backoffSeconds: 1,
-    },
-    // Voice via Vapi-managed ElevenLabs (BYO key in dashboard). voiceId is injected server-side.
-    ...(opts.voiceId
-      ? { voice: { provider: '11labs' as const, voiceId: opts.voiceId } }
-      : {}),
+    // candidate barge in. Shared + retuned in lib/voice.ts.
+    startSpeakingPlan: START_SPEAKING_PLAN,
+    stopSpeakingPlan: STOP_SPEAKING_PLAN,
+    // Always attach a real voice (Aura-2 by default via Vapi-managed Deepgram — no BYO key needed;
+    // keyed on track id so the rounds sound distinct). ElevenLabs when opts.voiceId is provided.
+    voice: pickInterviewerVoice(track.id, opts.voiceId),
   };
 }

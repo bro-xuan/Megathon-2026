@@ -47,9 +47,9 @@ export async function GET(request: Request) {
   const trackId = url.searchParams.get('track')?.trim();
   const personaSlug = url.searchParams.get('persona')?.trim();
   const candidateName = url.searchParams.get('name')?.trim() || undefined;
-  // ElevenLabs voice is opt-in: only used once a VALID 11labs credential is registered in Vapi
-  // (set VAPI_USE_ELEVENLABS=1). Otherwise omit voice → Vapi's built-in default voice, so the
-  // call still works on Groq alone.
+  // ElevenLabs voice is an opt-in upgrade: only used once a VALID 11labs credential is registered
+  // in Vapi (set VAPI_USE_ELEVENLABS=1). When off, voiceId is undefined and the assistant falls
+  // back to a Deepgram Aura-2 voice (Vapi-managed, no BYO key) — see lib/voice.ts.
   const useEleven = process.env.VAPI_USE_ELEVENLABS === '1';
   const voiceId = useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined;
 

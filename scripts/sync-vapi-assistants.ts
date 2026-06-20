@@ -19,8 +19,9 @@ const API = 'https://api.vapi.ai';
 const KEY = process.env.VAPI_PRIVATE_KEY;
 if (!KEY) throw new Error('VAPI_PRIVATE_KEY not set (it lives in .env; run via `npm run sync:vapi`)');
 
-// Voice is opt-in, mirroring /api/assistant: only attach an ElevenLabs voiceId when a valid
-// 11labs credential is registered in Vapi and VAPI_USE_ELEVENLABS=1.
+// Mirrors /api/assistant: pass an ElevenLabs voiceId only when VAPI_USE_ELEVENLABS=1 and a valid
+// 11labs credential is registered in Vapi. When undefined, the assistant uses a Deepgram Aura-2
+// voice (Vapi-managed, no BYO key) — see lib/voice.ts.
 const voiceId = process.env.VAPI_USE_ELEVENLABS === '1' ? process.env.ELEVENLABS_VOICE_ID : undefined;
 
 async function vapi(pathname: string, init: RequestInit = {}): Promise<any> {
