@@ -46,6 +46,25 @@ export default function StartPage() {
         ))}
       </div>
 
+      {/* Distilled real people — the headline differentiator: face a specific named interviewer. */}
+      <Link
+        href="/persona"
+        className="card-product flex items-center justify-between gap-4 max-w-[52rem] transition-colors hover:border-ink/30"
+        style={{ borderColor: "color-mix(in srgb, var(--verified) 35%, transparent)" }}
+      >
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-[1.15rem]">Face a specific person</span>
+            <span className="source-chip">◆ distilled</span>
+          </div>
+          <p className="text-muted text-[0.88rem] max-w-[40rem]">
+            Know who&apos;s in your final round? Distill them from their public traces — their
+            cited knowledge, objective, and how they actually talk — and spar with them.
+          </p>
+        </div>
+        <span className="text-ink text-[0.85rem] font-semibold shrink-0">Browse people →</span>
+      </Link>
+
       {/* Partner roster for the active domain. */}
       {partners.length > 0 ? (
         <section className="grid gap-[1.25rem] sm:grid-cols-2 max-w-[52rem]">

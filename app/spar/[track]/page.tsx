@@ -1,12 +1,12 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Vapi from "@vapi-ai/web";
-import { getTrack } from "@/lib/tracks";
-import type { TranscriptTurn } from "@/lib/types";
+import { buildPersonaTrack, getTrack } from "@/lib/tracks";
+import type { PersonaProfile, TranscriptTurn } from "@/lib/types";
 
 type Phase = "idle" | "connecting" | "live" | "debriefing" | "error";
 
@@ -19,12 +19,30 @@ function mmss(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function SparPage({ params }: { params: Promise<{ track: string }> }) {
+export default function SparRoute({ params }: { params: Promise<{ track: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <SparPage params={params} />
+    </Suspense>
+  );
+}
+
+function SparPage({ params }: { params: Promise<{ track: string }> }) {
   const { track: trackId } = use(params);
-  const track = getTrack(trackId);
+  const searchParams = useSearchParams();
+  const personaSlug = searchParams.get("persona") || undefined;
   const router = useRouter();
 
+  // A distilled persona REPLACES the archetype but runs the base round (trackId). Load it
+  // cache-only; until it arrives, fall back to the base track so the layout still renders.
+  const [persona, setPersona] = useState<PersonaProfile | null>(null);
+  const baseTrack = getTrack(trackId);
+  const track = persona ? buildPersonaTrack(persona) : baseTrack;
+
   const vapiRef = useRef<Vapi | null>(null);
+  // Safety net: if we enter "connecting" and never reach "live" (no mic, network, Vapi
+  // hiccup), this timer flips us to the error state instead of spinning forever.
+  const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const startedAtRef = useRef<number | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -35,8 +53,30 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState<string>("");
 
+  function clearConnectTimer() {
+    if (connectTimerRef.current) {
+      clearTimeout(connectTimerRef.current);
+      connectTimerRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    if (!personaSlug) return;
+    let live = true;
+    fetch(`/api/persona?slug=${encodeURIComponent(personaSlug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (live && d?.profile) setPersona(d.profile as PersonaProfile);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [personaSlug]);
+
   useEffect(() => {
     return () => {
+      clearConnectTimer();
       vapiRef.current?.stop();
     };
   }, []);
@@ -56,7 +96,7 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
     if (el) el.scrollTop = el.scrollHeight;
   }, [turns]);
 
-  if (!track) notFound();
+  if (!baseTrack) notFound();
 
   async function join() {
     const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
@@ -66,8 +106,28 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       return;
     }
     setPhase("connecting");
+    setError("");
+
+    // Mic pre-check. A live voice call needs the microphone; if it's blocked or absent, Vapi
+    // emits only device *warnings* and hangs on "connecting". Check up front so the candidate
+    // gets a clear, actionable message instead of an indefinite spinner.
     try {
-      const res = await fetch(`/api/assistant?track=${encodeURIComponent(track!.id)}`);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop()); // release immediately; Vapi acquires its own
+    } catch {
+      setError(
+        "Greenroom needs your microphone. Allow mic access in your browser — and on macOS, System Settings → Privacy → Microphone — then start the call again.",
+      );
+      setPhase("error");
+      return;
+    }
+
+    try {
+      // Persona drives an inline assistant (?persona=); plain rounds use ?track=.
+      const assistantUrl = personaSlug
+        ? `/api/assistant?persona=${encodeURIComponent(personaSlug)}`
+        : `/api/assistant?track=${encodeURIComponent(track!.id)}`;
+      const res = await fetch(assistantUrl);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load assistant");
       setFacts(Array.isArray(data.facts) ? data.facts : []);
@@ -75,19 +135,30 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       const vapi = new Vapi(publicKey);
       vapiRef.current = vapi;
       vapi.on("call-start", () => {
+        clearConnectTimer();
         startedAtRef.current = Date.now();
         setPhase("live");
       });
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
       vapi.on("error", (e: unknown) => {
-        setError(e instanceof Error ? e.message : "Vapi error");
+        // Vapi emits a structured object, not an Error — dig out the real message.
+        clearConnectTimer();
+        console.error("[vapi error]", e);
+        const err = e as { error?: { message?: string }; errorMsg?: string; message?: string; msg?: string };
+        const detail =
+          err?.error?.message ??
+          err?.errorMsg ??
+          err?.message ??
+          err?.msg ??
+          (typeof e === "string" ? e : JSON.stringify(e));
+        setError(detail || "Vapi error (see console)");
         setPhase("error");
       });
       // Vapi emits a rolling `conversation-update` carrying the FULL deduplicated
       // conversation. Use it as the source of truth — rebuild turns each update.
-      // (Raw `final` transcripts arrive one-per-pause and get dropped/reordered,
-      // which is what was splitting answers into fragments and losing some.)
+      // (Raw `final` transcripts arrive one-per-pause and get dropped/reordered, which
+      // splits one spoken answer into several broken bubbles and loses some entirely.)
       vapi.on("message", (msg: {
         type?: string;
         conversation?: { role?: string; content?: string }[];
@@ -98,16 +169,31 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
           const text = m.content?.trim();
           if (!text || (m.role !== "user" && m.role !== "assistant" && m.role !== "bot")) continue;
           const role: TranscriptTurn["role"] = m.role === "user" ? "candidate" : "interviewer";
-          // Coalesce consecutive same-role fragments into one bubble so a single
-          // spoken turn reads as one paragraph instead of several broken lines.
+          // Coalesce consecutive same-role fragments into one bubble so a single spoken
+          // turn reads as one paragraph instead of several broken lines.
           const last = next[next.length - 1];
           if (last && last.role === role) last.text = `${last.text} ${text}`;
           else next.push({ role, text });
         }
         setTurns(next);
       });
-      await vapi.start(data.assistant);
+      // Arm the safety net before starting: if "call-start" never fires within 15s, bail to the
+      // error state (with the sample-debrief fallback) instead of spinning on "connecting".
+      clearConnectTimer();
+      connectTimerRef.current = setTimeout(() => {
+        connectTimerRef.current = null;
+        vapiRef.current?.stop();
+        setError(
+          "The call didn't connect — usually a microphone or network issue. Try again, or see a sample debrief below.",
+        );
+        setPhase("error");
+      }, 15000);
+
+      // Prefer the persistent dashboard assistant (npm run sync:vapi); fall back to the inline
+      // config so the call still works before any sync / as venue insurance.
+      await vapi.start(data.assistantId ?? data.assistant);
     } catch (e) {
+      clearConnectTimer();
       setError(e instanceof Error ? e.message : "Failed to start call");
       setPhase("error");
     }
@@ -122,6 +208,7 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
   }
 
   async function endInterview() {
+    clearConnectTimer();
     vapiRef.current?.stop();
     setPhase("debriefing");
     try {
@@ -152,7 +239,9 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
     return (
       <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
         <div className="flex items-center justify-between">
-          <Link href="/start" className="label-eyebrow hover:text-ink">← Choose partner</Link>
+          <Link href={persona ? "/persona" : "/start"} className="label-eyebrow hover:text-ink">
+            ← {persona ? "Distilled people" : "Choose partner"}
+          </Link>
           <span className="label-eyebrow">briefing</span>
         </div>
         <div className="card-product flex flex-col gap-6 max-w-[44rem]">
@@ -163,20 +252,51 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-[1.6rem]">{track!.persona}</h1>
-                {grounded ? (
+                {persona ? (
+                  <span className="source-chip">◆ distilled · {persona.sources.length} sources</span>
+                ) : grounded ? (
                   <span className="source-chip">★ cited</span>
                 ) : (
                   <span className="label-eyebrow">delivery</span>
                 )}
               </div>
+              {persona && <p className="text-[0.8rem] text-ink/70">{persona.role}</p>}
               <p className="text-muted text-[0.9rem]">{track!.whoLine}</p>
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="label-eyebrow">The objective</span>
+            <span className="label-eyebrow">{persona ? "What they're evaluating" : "The objective"}</span>
             <p className="text-[0.95rem]">{track!.tagline}</p>
           </div>
+
+          {persona && (
+            <div className="flex flex-col gap-3 border border-border rounded-[0.6rem] p-4 bg-surface/40">
+              <div className="flex items-center justify-between gap-2">
+                <span className="label-eyebrow">How they interview</span>
+                <Link href={`/persona/${encodeURIComponent(persona.slug)}`} className="label-eyebrow hover:text-ink">
+                  Full dossier →
+                </Link>
+              </div>
+              {persona.style.petTopics.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {persona.style.petTopics.slice(0, 5).map((t) => (
+                    <span key={t} className="source-chip">{t}</span>
+                  ))}
+                </div>
+              )}
+              {persona.quotes[0] && (
+                <a
+                  href={persona.quotes[0].sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[0.85rem] italic text-muted hover:text-ink border-l-2 border-border pl-3"
+                >
+                  “{persona.quotes[0].text}”
+                </a>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <span className="label-eyebrow">What they know</span>
@@ -258,8 +378,8 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
             )}
           </div>
 
-          {/* Facts in play — the cited topics the interviewer can probe. This is the
-              differentiator made visible mid-call: bluff one and it surfaces in the debrief. */}
+          {/* Facts in play — the cited topics the interviewer can probe, visible mid-call.
+              Bluff one and it surfaces in the debrief with its source. */}
           {grounded && facts.length > 0 && (phase === "live" || phase === "connecting") && (
             <div className="border-t border-border pt-4">
               <div className="label-eyebrow mb-2">

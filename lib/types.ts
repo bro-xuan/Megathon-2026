@@ -74,3 +74,45 @@ export type GeneralDebrief = {
 
 /** Either debrief shape — discriminated by `mode`. */
 export type AnyDebrief = DebriefResult | GeneralDebrief;
+
+// ── Persona distillation ─────────────────────────────────────────────────────
+// A "distilled person" is a real, named interviewer (the partner you'll actually
+// face in a final round) reconstructed from their public traces. Same composition
+// as a Track — persona × cited knowledge × objective — but the PERSONA is a real
+// person and carries a STYLE layer (how they actually talk, grounded in cited
+// quotes). Distilled before the call and cached to data/personas/<slug>.{json,md};
+// the JSON is injected into the interviewer prompt, the MD is the human dossier.
+
+/** A verbatim quote pulled from the person's public material — the voice evidence. */
+export type PersonaQuote = {
+  text: string; // exact words, used to anchor the agent's register
+  context?: string; // where/when they said it
+  sourceUrl: string; // citation — must resolve
+  sourceName?: string;
+};
+
+/** How the person actually speaks + what they fixate on (distilled style layer). */
+export type PersonaStyle = {
+  tone: string; // one-paragraph description of their manner
+  cadence: string; // turn rhythm — short/clipped vs. winding, etc.
+  signaturePhrases: string[]; // things they actually say
+  petTopics: string[]; // what they always steer toward
+  tells: string[]; // how they push back / catch a weak answer
+};
+
+/** The distilled interviewer. Layers a real persona + style onto a base round template. */
+export type PersonaProfile = {
+  slug: string;
+  name: string; // "Aswath Damodaran"
+  role: string; // "Professor of Finance, NYU Stern"
+  avatar: string; // 2-char initials
+  headline: string; // one-line who-they-are for the card
+  baseTrack: string; // TrackId of the round template they run (markets/stock-pitch/…)
+  objective: string; // what they evaluate, in their frame
+  firstMessage: string; // opening line, in their voice
+  style: PersonaStyle;
+  quotes: PersonaQuote[]; // cited verbatim quotes (may be empty if no corpus)
+  knowledge: FactPack; // cited facts about the person / their firm / their views (Cala)
+  sources: { name: string; url: string }[]; // every source the distillation drew on
+  distilledAt: string; // ISO timestamp
+};
