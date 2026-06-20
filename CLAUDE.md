@@ -52,6 +52,18 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
 ## Decision log & API quirks (append newest at top)
 
+**M5 polish + Cala "too complex" guard fixed (2026-06-20):** Production `next build` clean (11
+routes, TS passes). (1) **Cala rejects over-long compound `knowledge_search` queries** for some
+entities with a degenerate summary `"This question is too complex to answer fully…"` and **0
+facts** — this had silently cached + committed an **empty OpenAI pack**. `buildFactPack` now
+tries a moderate query then falls back to progressively simpler ones (`searchInputs()`), skipping
+any degenerate result (`isDegenerate`). Rebuilt `openai.json`: 9 cited facts (incl. the **IPO
+catch**, sourced to **Ars Technica** — HTTP 200, no Bloomberg paywall, so the old TODO is moot)
++ 31 relationships. Stripe pack left untouched (frozen/verified). (2) Global **sponsor footer**
+in `layout.tsx` on every page + discreet **"Sample debrief →"** link to `/debrief/mock-stripe`;
+Spar error state offers the same fallback (venue/Vapi-failure insurance). Browser voice call +
+Vercel deploy still pending.
+
 **Vapi keys live + Groq BYO configured (2026-06-20):** `VAPI_PRIVATE_KEY` +
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` in `.env`. REST auth verified (`GET /call` → 200; 0 prior calls,
 so the transcript shape is confirmed on the first real call). Registered the **Groq** provider

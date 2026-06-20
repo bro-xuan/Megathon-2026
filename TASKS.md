@@ -77,25 +77,22 @@ a step the candidate must read before interviewing.
   skip entirely — Study keeps the M1 card view.*
 
 ## M5 — Polish + demo hardening (~2h)
-- [ ] Apply `DESIGN.md` tokens/typography; fluid `clamp()` root font verified on a wide
-      display.
-- [ ] **"Video call" skin for Spar** — static interviewer image + call chrome
-      (`InterviewerStage` + `CallBar`). Cosmetic only; audio stays the browser web call.
-      No Twilio, no real video.
-- [ ] **Fake scheduling flow (on the critical path)** — Cal-style booking screen
-      (`BookingPicker` + `ConfirmationCard`) that "books" a slot then **starts the call
-      immediately** via "Join now". No real time-triggered backend. *Timebox ~1–2h; it's
-      cosmetic — don't let it eat M2/M3.*
-- [ ] **Visible Cala moment** — a "Querying Cala.ai for [Company]'s entity network…" loading
-      beat on "Join now" / Spar entry, so judges *see* Cala working (else it looks like a
-      scraped JSON file). Cheap, high legibility for the sponsor prize.
-- [ ] **Mock/fallback mode** — canned fact pack + recorded call + **a hardcoded, perfect
-      precomputed `DebriefResult`** mapped to the recorded transcript, triggerable manually.
-      If the live API hesitates for even a second during the demo, render the perfect Debrief
-      instantly. Network-off safe.
-- [ ] Deploy to Vercel; set env vars in the dashboard.
-- [ ] Script the bluffs in advance and rehearse the demo end to end.
+- [x] Apply `DESIGN.md` tokens/typography; fluid `clamp()` root font verified on a wide
+      display. (Global sponsor footer added in `layout.tsx`.)
+- [x] **"Video call" skin for Spar** — static interviewer "MD" stage + speaking indicator +
+      `CallBar` (mute / end). Cosmetic only; audio stays the browser web call.
+- [x] **Fake scheduling flow (on the critical path)** — `app/schedule/page.tsx` Cal-style
+      `BookingPicker` + `ConfirmationCard`; "Join now →" starts the call immediately.
+- [x] **Visible Cala moment** — Spar "connecting" phase shows "Querying Cala.ai for [Company]'s
+      entity network…" so judges *see* Cala working.
+- [x] **Mock/fallback mode** — `data/mock/stripe.json` precomputed perfect `DebriefResult`
+      (score 45, $159B catch + Yahoo link) → `/debrief/mock-stripe`, offline-safe. Reachable
+      via the footer "Sample debrief →" and the Spar error-state fallback.
+- [ ] Deploy to Vercel; set env vars in the dashboard. **(PARKED — user: last step, on request.)**
+- [ ] **Live browser voice call** — the one untested piece (needs a real browser + mic);
+      `/api/assistant` is server-verified. Rehearse the bluffs end to end.
 - **DoD:** full flow runs on the Vercel URL **and** the recorded fallback works offline.
+  *(Production `next build` is clean; fallback works; live call + deploy remain.)*
 
 ### M6 (optional, LAST STEP) — Mollie paywall ✂️ cut freely
 **Do this only after the whole product is built and working** — integrating Mollie is the
