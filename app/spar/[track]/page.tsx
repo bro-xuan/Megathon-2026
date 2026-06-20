@@ -52,13 +52,22 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
         setError(e instanceof Error ? e.message : "Vapi error");
         setPhase("error");
       });
-      vapi.on("message", (msg: { type?: string; role?: string; transcript?: string; transcriptType?: string }) => {
-        if (msg.type === "transcript" && msg.transcriptType === "final" && msg.transcript) {
-          setTurns((prev) => [
-            ...prev,
-            { role: msg.role === "user" ? "candidate" : "interviewer", text: msg.transcript! },
-          ]);
+      // Vapi emits a rolling `conversation-update` carrying the FULL deduplicated
+      // conversation. Use it as the source of truth — rebuild turns each update.
+      // (Raw `final` transcripts arrive one-per-pause and get dropped/reordered,
+      // which is what was splitting answers into fragments and losing some.)
+      vapi.on("message", (msg: {
+        type?: string;
+        conversation?: { role?: string; content?: string }[];
+      }) => {
+        if (msg.type !== "conversation-update" || !Array.isArray(msg.conversation)) return;
+        const next: TranscriptTurn[] = [];
+        for (const m of msg.conversation) {
+          const text = m.content?.trim();
+          if (!text || (m.role !== "user" && m.role !== "assistant" && m.role !== "bot")) continue;
+          next.push({ role: m.role === "user" ? "candidate" : "interviewer", text });
         }
+        setTurns(next);
       });
       await vapi.start(data.assistant);
     } catch (e) {
