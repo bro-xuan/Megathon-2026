@@ -1,30 +1,55 @@
 # Greenroom — Product Requirements Document
 
-> A voice-native **mock interviewer** for high-stakes finance, grounded in real, cited data —
-> it catches your bluffs when you practice.
+> A voice-native rehearsal room for **any hard conversation** — grounded in real, cited data
+> where facts matter, so it catches your bluffs when you practice.
 
 **Event:** Megathon 2026 · **Build window:** ~1.5 days · **Sponsors targeted:** Cala.ai
 (data moat) + Vapi (voice). This is the single source of truth — vision *and* buildable spec.
 
 ---
 
+## 0. Framing: simulate any hard conversation (vision broad, demo narrow)
+
+Greenroom is the room where you practice the conversations that are hard to face alone: a
+job interview, an investor pitch, asking for a raise, breaking bad news. You pick the kind of
+conversation; a voice agent plays the person across the table; afterward you get a debrief.
+**Mock interview is one category, not the product** — that framing was crowded and undersold
+what we built.
+
+The product splits into **two tiers**, and the split is the whole strategy:
+
+- **Grounded conversations (the moat — Cala load-bearing).** Where the other side can *call
+  your bluff on a fact*: interviews, investor pitches, fact-backed negotiation. The agent is
+  grounded in **verified, cited data**, and the debrief flags every claim you faked, **sourced**.
+  Nobody else's voice sim has a ground-truth layer. This is what wins the Cala prize.
+- **Relational conversations (table stakes — range).** Where there's no fact to check: break-ups,
+  hard feedback, letting someone go. The agent pushes back emotionally; the debrief coaches
+  delivery (the `buildGeneralDebrief` path). Any LLM can run these — they prove the breadth, they
+  are **not** the demo.
+
+**The demo runs one grounded category end to end (the IB interview). The menu sells the rest.**
+The picker shows the breadth — most tiles are honest "coming soon," not vaporware — because the
+architecture (keyed on track + a `grounded` flag, not on a hard-coded scenario) makes adding a
+category a config entry, not a rebuild. Sections 1–11 below specify that one hero category in full.
+
 ## 1. Problem
 
-High-stakes conversations — IB interviews, sales calls, investor pitches, negotiations —
-are won on two things: how you carry yourself, and whether you actually know the facts
-about the company/person across the table. People rehearse in their head or with a friend
-who knows nothing about the counterparty. Generic AI voice tools roleplay fluently but
-**make up** the counterparty's details, so they miss the single most common failure mode:
-confidently saying something false about a real company. In a real IB interview, bluffing
-on a fact is exactly how you lose.
+High-stakes conversations — interviews, investor pitches, negotiations, the personal talks you
+dread — are won on two things: how you carry yourself, and (where it applies) whether you
+actually know the facts about the company/person across the table. People rehearse in their head
+or with a friend who can't push back convincingly. Generic AI voice tools roleplay fluently but,
+in the conversations where facts matter, **make up** the counterparty's details — so they miss the
+single most common failure mode: confidently saying something false about a real company. In a
+real IB interview, bluffing on a fact is exactly how you lose.
 
 ## 2. Solution
 
-Pick a scenario and a **real** target (a company / deal / interviewer at a bank).
-Greenroom places a live voice call where the AI plays the other side of the table,
-grounded in **verified, cited facts** about that real target. It probes, objects, and
-fact-checks you mid-conversation. After the call you get a transcript with every bluff
-flagged and **sourced**.
+Pick a kind of hard conversation. For the **grounded** categories you also pick a **real** target
+(a company / deal / interviewer). Greenroom places a live voice call where the AI plays the other
+side of the table — for grounded categories, grounded in **verified, cited facts** about that real
+target. It probes, objects, and fact-checks you mid-conversation. After the call you get a
+transcript with every bluff flagged and **sourced** (grounded) or a delivery-and-structure debrief
+(relational).
 
 **Hero use case — the IB / finance interview.** Greenroom runs a live mock interview by
 voice. It handles the technical drills a generic LLM already knows, but its edge is the
@@ -75,10 +100,12 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 
 ## 4. Users
 
-- **Primary:** finance students / early-career candidates prepping for IB/PE/consulting
+- **Primary (the demo):** finance students / early-career candidates prepping for IB/PE/consulting
   interviews who fear the "pitch me a company" curveball.
-- **Secondary (pitch only):** anyone rehearsing a fact-sensitive high-stakes conversation
-  (sales, fundraising). The platform story; not built for the demo.
+- **Secondary (the vision — shown as coming-soon, not built):** anyone rehearsing a hard
+  conversation — founders prepping an investor pitch, anyone asking for a raise, anyone facing a
+  break-up or hard feedback they keep putting off. The grounded categories share the demo's
+  cited-fact engine; the relational ones share the voice agent and the general debrief.
 
 ## 5. Scope
 
@@ -117,11 +144,19 @@ Landing ──► Schedule ──► Spar ──► Debrief
 - **Mollie test-mode paywall** (M6, the last step) — a Business/Distribution-score booster;
   the Mollie account already qualifies us for the Startup track regardless. See `TASKS.md`.
 
-### Out of scope (pitch as "platform", don't build)
-- **Live co-pilot / "brief you while you're live."** Greenroom is a *mock* interviewer only.
+### Roadmap (pitch as "the vision", show as coming-soon tiles, don't build for the demo)
+- **Other conversation categories** — investor pitch and fact-backed negotiation (grounded, reuse
+  the cited engine); break-ups, hard feedback, letting someone go (relational, reuse the voice
+  agent + general debrief). These are **config entries** behind a `grounded` flag
+  (`CONVERSATION_CATEGORIES` in `lib/tracks.ts`), surfaced as honest "coming soon" tiles on the
+  picker so the breadth is legible without faking depth. Build **one** grounded category for the demo.
+- **Other interview fields** within the live category — sales / consulting / med school (the
+  `DOMAINS` roadmap), same coming-soon treatment.
+
+### Out of scope (don't build, don't pitch)
+- **Live co-pilot / "brief you while you're live."** Greenroom is a *mock* / rehearsal tool only.
   There is **no real-time Cala lookup during a call** — that contradicts the core architecture
   (grounding before, scoring after) and is a different product with no shared code.
-- Multiple verticals (sales, negotiation) beyond the IB interview.
 - Arbitrary user-entered targets on stage (curated demo companies only).
 - **Real video streams, phone calls / Twilio, and any real time-triggered scheduling backend.**
 - Deep Mollie integration beyond a test-mode checkout.

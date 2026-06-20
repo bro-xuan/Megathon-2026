@@ -31,16 +31,17 @@ export default async function DebriefPage({
 
   return (
     <main className="flex-1">
-      <div className="container-page py-[6rem] flex flex-col gap-[2.5rem]">
-        <header className="flex flex-col gap-3">
-          <Link href="/" className="label-eyebrow hover:text-ink w-fit">
+      <div className="container-page py-[4rem] flex flex-col gap-[2.5rem]">
+        <header className="flex flex-col gap-3 reveal">
+          <Link href="/" className="label-eyebrow hover:text-ink w-fit transition-colors">
             ← Greenroom
           </Link>
-          <h1 className="font-display text-[clamp(1.8rem,3vw,3rem)] leading-tight">
-            Debrief — {target} interview
+          <span className="label-eyebrow">Debrief · sample</span>
+          <h1 className="font-display text-[clamp(1.8rem,3.4vw,3rem)] leading-[1.04]">
+            Your {target} interview, scored
           </h1>
-          <p className="text-muted">
-            {debrief.flags.length} bluff{debrief.flags.length === 1 ? "" : "s"} caught, all
+          <p className="text-muted text-[1.02rem] max-w-[44rem]">
+            <strong className="text-ink">{debrief.flags.length} bluff{debrief.flags.length === 1 ? "" : "s"} caught</strong>, all
             sourced. Every factual claim you made was checked against Cala&apos;s cited data.
           </p>
         </header>
@@ -49,17 +50,17 @@ export default async function DebriefPage({
 
         {debrief.flags.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="font-display text-[1.3rem]">Bluffs caught</h2>
+            <h2 className="font-display text-[1.35rem]">Bluffs caught</h2>
             <div className="grid gap-[1rem]">
               {debrief.flags.map((f, i) => (
-                <FlagCard key={i} flag={f} />
+                <FlagCard key={i} flag={f} index={i} />
               ))}
             </div>
           </section>
         )}
 
         <section className="flex flex-col gap-2">
-          <h2 className="font-display text-[1.3rem]">Every claim, checked</h2>
+          <h2 className="font-display text-[1.35rem]">Every claim, checked</h2>
           <p className="text-muted text-[0.85rem]">
             {debrief.verifiedCount} of {debrief.totalClaims} verified against a source — the
             wall of citations.
@@ -72,7 +73,7 @@ export default async function DebriefPage({
         </section>
 
         <details className="card">
-          <summary className="font-display text-[1.1rem] cursor-pointer">Full transcript</summary>
+          <summary className="font-display text-[1.1rem] cursor-pointer select-none">Full transcript</summary>
           <div className="mt-4">
             <TranscriptView transcript={transcript} />
           </div>

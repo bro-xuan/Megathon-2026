@@ -82,9 +82,9 @@ export default function NewPersonaPage() {
           <Link href="/persona" className="label-eyebrow hover:text-ink">← Distilled people</Link>
           <span className="label-eyebrow">distilled</span>
         </div>
-        <div className="card-product flex flex-col gap-5 max-w-[44rem]">
+        <div className="card-product card-grounded flex flex-col gap-5 max-w-[44rem] reveal">
           <div className="flex items-center gap-4">
-            <div className="w-[4rem] h-[4rem] shrink-0 rounded-full bg-surface border border-border flex items-center justify-center font-display text-[1.3rem]">
+            <div className="w-[4rem] h-[4rem] shrink-0 rounded-full avatar-accent flex items-center justify-center font-display text-[1.3rem] shadow-md">
               {p.avatar}
             </div>
             <div className="flex flex-col gap-0.5">
@@ -120,10 +120,10 @@ export default function NewPersonaPage() {
           )}
 
           <div className="flex items-center gap-3 flex-wrap border-t border-border pt-4">
-            <Link href={`/persona/${encodeURIComponent(p.slug)}`} className="btn-primary">Open dossier →</Link>
-            <Link href={`/spar/${encodeURIComponent(p.baseTrack)}?persona=${encodeURIComponent(p.slug)}`} className="btn-secondary">
+            <Link href={`/spar/${encodeURIComponent(p.baseTrack)}?persona=${encodeURIComponent(p.slug)}`} className="btn-accent">
               Start the call →
             </Link>
+            <Link href={`/persona/${encodeURIComponent(p.slug)}`} className="btn-secondary">Open dossier →</Link>
             <button className="label-eyebrow hover:text-ink" onClick={() => setResult(null)}>Distill another</button>
           </div>
         </div>
@@ -140,6 +140,7 @@ export default function NewPersonaPage() {
       </div>
 
       <header className="flex flex-col gap-2 max-w-[44rem]">
+        <span className="label-eyebrow">New persona</span>
         <h1 className="font-display text-[clamp(1.8rem,3.5vw,2.6rem)] leading-[1.1]">Distill your interviewer</h1>
         <p className="text-muted text-[0.95rem]">
           Name the person you&apos;ll face. Add links to how they actually talk — talks, posts,
@@ -153,7 +154,7 @@ export default function NewPersonaPage() {
         <label className="flex flex-col gap-1.5">
           <span className="label-eyebrow">Who are you facing?</span>
           <input
-            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[1rem] focus:outline-none focus:border-ink/40"
+            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[1rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
             placeholder="e.g. Taylor Wright"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -165,7 +166,7 @@ export default function NewPersonaPage() {
         <label className="flex flex-col gap-1.5">
           <span className="label-eyebrow">What round do they run?</span>
           <select
-            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.95rem] focus:outline-none focus:border-ink/40"
+            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.95rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
             value={baseTrack}
             onChange={(e) => setBaseTrack(e.target.value)}
             disabled={busy}
@@ -184,7 +185,7 @@ export default function NewPersonaPage() {
             return (
               <div key={i} className="flex items-center gap-2">
                 <input
-                  className="flex-1 bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.9rem] focus:outline-none focus:border-ink/40"
+                  className="flex-1 bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.9rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
                   placeholder="https://…"
                   value={l}
                   onChange={(e) => setLink(i, e.target.value)}
@@ -211,7 +212,7 @@ export default function NewPersonaPage() {
         {error && <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>}
 
         <div className="flex items-center gap-3 flex-wrap border-t border-border pt-4">
-          <button className="btn-primary" onClick={distill} disabled={busy}>
+          <button className="btn-accent disabled:opacity-60" onClick={distill} disabled={busy}>
             {busy ? "Distilling…" : "Distill persona →"}
           </button>
           <span className="text-muted text-[0.8rem]">

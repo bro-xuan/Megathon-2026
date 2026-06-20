@@ -41,8 +41,11 @@ export function FactRow({ fact }: { fact: Fact }) {
 export function FactCard({ title, facts }: { title: string; facts: Fact[] }) {
   if (!facts.length) return null;
   return (
-    <section className="card">
-      <h2 className="font-display text-[1.25rem] mb-2">{title}</h2>
+    <section className="card-product flex flex-col">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-display text-[1.25rem]">{title}</h2>
+        <span className="pill">{facts.length}</span>
+      </div>
       <ul>
         {facts.map((f, i) => (
           <FactRow key={i} fact={f} />

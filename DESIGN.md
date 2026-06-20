@@ -106,14 +106,35 @@ illustrations — Cal's "show the product in the card" approach.
 ## 8. Screens & flows
 
 ```
-Landing ──► Schedule ──► Study ──► Spar ──► Debrief
-            (book slot)  (facts)  (video)  (sourced flags + score)
+Landing ──► Pick a conversation ──► Schedule ──► Study ──► Spar ──► Debrief
+            (category menu)          (book slot)  (facts)  (video)  (sourced flags + score)
+              │
+              └─ only "Job interview" is live; the rest are coming-soon tiles
 ```
 
-### 8.1 Landing
-- Cal Sans hero with the product one-liner; generous whitespace on white canvas. A single
-  scenario card (**"IB / Finance Interview"**) on `--surface`; curated target picker as
-  prominent cards. CTA (black `--ink` button): **"Book your interview →"**.
+### 8.0 Landing — the hard-conversation menu (the framing)
+The first thing a judge sees must read as **"practice any hard conversation,"** not "mock
+interviewer." Above the fold: Cal Sans hero with the umbrella one-liner, then a **category
+grid** (`CONVERSATION_CATEGORIES` in `lib/tracks.ts`) of soft-rounded cards on `--surface`:
+
+- **Live tile — "Job interview"** — full color, a `★ cited` `SourceChip` in the corner (it's
+  grounded), a real CTA: **"Start →"**. This is the one built path; it leads into the interview
+  field + partner picker (8.1).
+- **Coming-soon tiles — "Investor pitch", "Negotiation", "Difficult personal talk"** — same card,
+  `opacity-45`, `cursor-not-allowed`, a small `soon` label. Grounded ones (pitch, negotiation)
+  carry the muted `★ cited` chip; the relational one (`difficult-personal`) carries a neutral
+  `delivery` label — so the **two tiers are visible at a glance**. Each lists 2–3 `examples`
+  ("Break up with a partner", "Ask for a raise") in the mono face so the depth reads as real.
+
+The grid does the strategic work: the breadth sells the vision, the single lit-up tile + cited
+chips tell the judge exactly where the moat is. Restraint per §1 — no loud color, hierarchy from
+surface + opacity, evidence colors only on the cited chips.
+
+### 8.1 Pick your interviewer (the live category's interior)
+Reached by clicking the live **"Job interview"** tile. The existing `/start` screen: interview
+**field tabs** (IB live, sales/consulting/med "soon") over a **partner roster** of persona cards
+(grounded partners first, `★ cited`; behavioral/technical second, `delivery`), plus the curated
+**prep-material** strip. CTA into Schedule: **"Book your interview →"**.
 
 ### 8.2 Schedule — the booking (fake)
 - A **Cal.com-style booking screen** (fitting — our design language *is* Cal's): a

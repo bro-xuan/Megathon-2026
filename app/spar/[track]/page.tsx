@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Vapi from "@vapi-ai/web";
 import { buildPersonaTrack, getTrack } from "@/lib/tracks";
+import { Avatar } from "@/app/components/avatar";
 import type { PersonaProfile, TranscriptTurn } from "@/lib/types";
 
 type Phase = "idle" | "connecting" | "live" | "debriefing" | "error";
@@ -238,29 +239,32 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
   if (phase === "idle") {
     return (
       <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
-        <div className="flex items-center justify-between">
-          <Link href={persona ? "/persona" : "/start"} className="label-eyebrow hover:text-ink">
+        <div className="flex items-center justify-between reveal">
+          <Link href={persona ? "/persona" : "/start"} className="label-eyebrow hover:text-ink transition-colors">
             ← {persona ? "Distilled people" : "Choose partner"}
           </Link>
-          <span className="label-eyebrow">briefing</span>
+          <span className="pill">briefing</span>
         </div>
-        <div className="card-product flex flex-col gap-6 max-w-[44rem]">
+        <div className={`card-product card-grounded flex flex-col gap-6 max-w-[44rem] reveal ${grounded ? "" : "!bg-surface-product !border-border"}`}>
           <div className="flex items-center gap-4">
-            <div className="w-[4.5rem] h-[4.5rem] shrink-0 rounded-full bg-surface border border-border flex items-center justify-center font-display text-[1.4rem]">
-              {track!.avatar}
-            </div>
+            <Avatar
+              src={track!.portrait}
+              initials={track!.avatar}
+              accent={grounded}
+              className="w-[4.5rem] h-[4.5rem] shrink-0 text-[1.4rem]"
+            />
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-[1.6rem]">{track!.persona}</h1>
+                <h1 className="font-display text-[1.6rem]">{track!.name}</h1>
                 {persona ? (
                   <span className="source-chip">◆ distilled · {persona.sources.length} sources</span>
                 ) : grounded ? (
                   <span className="source-chip">★ cited</span>
                 ) : (
-                  <span className="label-eyebrow">delivery</span>
+                  <span className="pill">delivery</span>
                 )}
               </div>
-              {persona && <p className="text-[0.8rem] text-ink/70">{persona.role}</p>}
+              <p className="text-[0.82rem] text-ink/70">{track!.role}</p>
               <p className="text-muted text-[0.9rem]">{track!.whoLine}</p>
             </div>
           </div>
@@ -318,10 +322,10 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap border-t border-border pt-4">
-            <button className="btn-primary" onClick={join}>
+            <button className={grounded ? "btn-accent" : "btn-primary"} onClick={join}>
               Start the call →
             </button>
-            <span className="text-muted text-[0.8rem]">
+            <span className="text-muted text-[0.8rem] max-w-[20rem]">
               {grounded
                 ? "Voice. Bluff a fact and it lands in your debrief — with the source."
                 : "Voice. Delivery practice, scored after the call."}
@@ -333,32 +337,69 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
   }
 
   return (
-    <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
+    <main className="container-page py-[2rem] flex flex-col gap-[1.25rem] flex-1">
       <div className="flex items-center justify-between">
-        <span className="label-eyebrow">Greenroom · {track!.persona}</span>
-        <span className="label-eyebrow">
-          {phase === "live" ? `● live · ${mmss(elapsed)}` : phase}
-        </span>
+        <span className="label-eyebrow">Greenroom · {track!.name}</span>
+        {phase === "live" ? (
+          <span className="badge-live">live · {mmss(elapsed)}</span>
+        ) : (
+          <span className="pill">{phase}</span>
+        )}
       </div>
 
-      <div className="grid gap-[1.5rem] md:grid-cols-[1.4fr_1fr] flex-1">
+      <div className="grid gap-[1.5rem] md:grid-cols-[1.45fr_1fr] flex-1">
         {/* Interviewer "video" stage (avatar + speaking state + live facts rail) */}
-        <div className="card-product flex flex-col gap-4 min-h-[24rem] relative">
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div
-              className="w-[8rem] h-[8rem] rounded-full bg-surface border border-border flex items-center justify-center font-display text-[2rem] transition-shadow"
-              style={speaking ? { boxShadow: "0 0 0 0.4rem color-mix(in srgb, var(--ink) 8%, transparent)" } : undefined}
-            >
-              {track!.avatar}
+        <div className="card-product flex flex-col gap-4 min-h-[26rem] relative overflow-hidden">
+          {/* Faint ambient wash so the call surface reads as a "stage", not a flat box. */}
+          <div
+            className="absolute inset-0 -z-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(60% 50% at 50% 38%, color-mix(in srgb, var(--verified) 7%, transparent), transparent 70%)",
+            }}
+          />
+          <div className="flex-1 flex flex-col items-center justify-center gap-5 relative">
+            {/* Speaking orb — concentric rings ripple while the interviewer talks. */}
+            <div className="relative w-[8.5rem] h-[8.5rem]">
+              {phase === "live" && speaking && (
+                <>
+                  <span className="orb-ring" />
+                  <span className="orb-ring" style={{ animationDelay: "0.8s" }} />
+                  <span className="orb-ring" style={{ animationDelay: "1.6s" }} />
+                </>
+              )}
+              <div
+                className={`absolute inset-0 rounded-full overflow-hidden flex items-center justify-center font-display text-[2.1rem] shadow-md ${
+                  grounded ? "avatar-accent" : "avatar-ink"
+                }`}
+                style={
+                  phase === "live" && speaking
+                    ? { animation: "orb-breathe 2.4s ease-in-out infinite" }
+                    : undefined
+                }
+              >
+                {track!.portrait ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={track!.portrait} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  track!.avatar
+                )}
+              </div>
             </div>
-            <div className="text-center">
-              <div className="font-display text-[1.2rem]">{track!.persona}</div>
-              <div className="text-muted text-[0.85rem]">
+            <div className="text-center relative">
+              <div className="font-display text-[1.3rem]">{track!.name}</div>
+              <div className="text-muted text-[0.85rem] mt-0.5 inline-flex items-center gap-1.5">
+                {phase === "live" && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: speaking ? "var(--verified)" : "var(--border-strong)" }}
+                  />
+                )}
                 {phase === "live" ? (speaking ? "Speaking…" : "Listening…") : track!.title}
               </div>
             </div>
             {phase === "connecting" && (
-              <p className="text-muted text-[0.85rem]">
+              <p className="badge-live text-[0.85rem]">
                 {grounded ? "Loading your cited prep packs…" : "Connecting…"}
               </p>
             )}
@@ -428,15 +469,24 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
 
       {/* Call bar */}
       {(phase === "live" || phase === "connecting") && (
-        <div className="card-product flex items-center justify-center gap-4">
-          <button className="btn-secondary" onClick={toggleMute}>
+        <div className="card-product flex items-center justify-center gap-3 py-3">
+          <button
+            className={`inline-flex items-center gap-2 rounded-[0.7rem] px-4 py-2.5 text-[0.9rem] font-medium border transition-all ${
+              muted
+                ? "bg-surface text-ink border-border-strong"
+                : "bg-canvas text-ink border-border hover:border-ink"
+            }`}
+            onClick={toggleMute}
+          >
+            <span aria-hidden>{muted ? "🔇" : "🎙"}</span>
             {muted ? "Unmute" : "Mute"}
           </button>
           <button
-            className="btn-primary"
-            style={{ background: "var(--flag)" }}
+            className="inline-flex items-center gap-2 rounded-[0.7rem] px-5 py-2.5 text-[0.9rem] font-semibold text-white shadow-[0_6px_20px_rgba(210,59,59,0.3)] transition-transform hover:-translate-y-0.5"
+            style={{ background: "linear-gradient(135deg, #e04545 0%, #c62828 100%)" }}
             onClick={endInterview}
           >
+            <span aria-hidden>■</span>
             End interview
           </button>
         </div>
