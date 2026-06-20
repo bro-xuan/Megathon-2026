@@ -48,13 +48,14 @@ export default function LiveDebriefPage() {
 
   return (
     <main className="flex-1">
-      <div className="container-page py-[6rem] flex flex-col gap-[2.5rem]">
-        <header className="flex flex-col gap-3">
-          <Link href="/" className="label-eyebrow hover:text-ink w-fit">← Greenroom</Link>
-          <h1 className="font-display text-[clamp(1.8rem,3vw,3rem)] leading-tight">
-            Debrief — {label} round
+      <div className="container-page py-[4rem] flex flex-col gap-[2.5rem]">
+        <header className="flex flex-col gap-3 reveal">
+          <Link href="/" className="label-eyebrow hover:text-ink w-fit transition-colors">← Greenroom</Link>
+          <span className="label-eyebrow">Debrief · {isGeneral ? "delivery" : "cited"}</span>
+          <h1 className="font-display text-[clamp(1.8rem,3.4vw,3rem)] leading-[1.04]">
+            Your {label} round, scored
           </h1>
-          <p className="text-muted">
+          <p className="text-muted text-[1.02rem] max-w-[44rem]">
             {isGeneral ? (
               "Delivery review for this round — no fact-check (grounded tracks catch bluffs against cited data)."
             ) : (
@@ -91,15 +92,15 @@ function CitedDebrief({ debrief }: { debrief: DebriefResult }) {
 
       {debrief.flags.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-[1.3rem]">Bluffs caught</h2>
+          <h2 className="font-display text-[1.35rem]">Bluffs caught</h2>
           <div className="grid gap-[1rem]">
-            {debrief.flags.map((f, i) => <FlagCard key={i} flag={f} />)}
+            {debrief.flags.map((f, i) => <FlagCard key={i} flag={f} index={i} />)}
           </div>
         </section>
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-display text-[1.3rem]">Every claim, checked</h2>
+        <h2 className="font-display text-[1.35rem]">Every claim, checked</h2>
         <p className="text-muted text-[0.85rem]">
           {debrief.verifiedCount} of {debrief.totalClaims} verified against a source.
         </p>

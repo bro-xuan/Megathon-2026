@@ -26,17 +26,53 @@ export default function RootLayout({
       className={`${inter.variable} ${manrope.variable} ${plexMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col bg-canvas text-ink">
-        {children}
-        <footer className="bg-footer text-white">
-          <div className="container-page py-[2rem] text-[0.8rem] text-white/70 flex items-center justify-between gap-4 flex-wrap">
-            <span>
-              Grounded in <strong className="text-white/90">Cala.ai</strong> cited data · Voice by{" "}
-              <strong className="text-white/90">Vapi</strong> · Greenroom
-            </span>
-            {/* Demo insurance: one click to the precomputed perfect debrief, offline-safe. */}
-            <Link href="/debrief/mock-stripe" className="text-white/40 hover:text-white/90 transition-colors">
-              Sample debrief →
+        {/* Slim sticky chrome — frames every screen as one product, not a deck of pages. */}
+        <header className="sticky top-0 z-50 border-b border-border bg-canvas/80 backdrop-blur-md">
+          <div className="container-page h-[3.4rem] flex items-center justify-between gap-4">
+            <Link href="/" className="flex items-center gap-2 group">
+              <span className="w-[1.5rem] h-[1.5rem] rounded-[0.45rem] avatar-accent flex items-center justify-center text-[0.7rem] font-display shadow-sm">
+                G
+              </span>
+              <span className="font-display text-[1.05rem] tracking-tight">Greenroom</span>
             </Link>
+            <div className="flex items-center gap-4 text-[0.8rem]">
+              <span className="badge-live hidden sm:inline-flex">grounded in cited data</span>
+              <Link
+                href="/debrief/mock-stripe"
+                className="text-muted hover:text-ink transition-colors font-medium"
+              >
+                Sample debrief →
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {children}
+
+        <footer className="bg-footer text-white mt-auto">
+          <div className="container-page py-[2.5rem] flex flex-col gap-6">
+            <div className="flex items-end justify-between gap-6 flex-wrap">
+              <div className="flex flex-col gap-2">
+                <span className="font-display text-[1.6rem] tracking-tight text-white">
+                  Practice the conversation before it counts.
+                </span>
+                <span className="text-white/55 text-[0.85rem]">
+                  Voice-native rehearsal, grounded in cited data.
+                </span>
+              </div>
+              <Link href="/start" className="btn-accent text-[0.9rem]">
+                Start an interview →
+              </Link>
+            </div>
+            <div className="border-t border-white/10 pt-5 text-[0.78rem] text-white/45 flex items-center justify-between gap-4 flex-wrap">
+              <span>
+                Grounded in <strong className="text-white/80">Cala.ai</strong> cited data · Voice by{" "}
+                <strong className="text-white/80">Vapi</strong>
+              </span>
+              <Link href="/debrief/mock-stripe" className="text-white/40 hover:text-white/90 transition-colors">
+                See a sample debrief →
+              </Link>
+            </div>
           </div>
         </footer>
       </body>

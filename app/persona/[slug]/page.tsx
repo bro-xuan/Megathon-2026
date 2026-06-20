@@ -35,8 +35,8 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
       </div>
 
       {/* Header */}
-      <div className="flex items-center gap-4 max-w-[48rem]">
-        <div className="w-[4.5rem] h-[4.5rem] shrink-0 rounded-full bg-surface border border-border flex items-center justify-center font-display text-[1.4rem]">
+      <div className="flex items-center gap-4 max-w-[48rem] reveal">
+        <div className="w-[4.5rem] h-[4.5rem] shrink-0 rounded-full avatar-accent flex items-center justify-center font-display text-[1.4rem] shadow-md">
           {p.avatar}
         </div>
         <div className="flex flex-col gap-1">
@@ -47,10 +47,10 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
           <p className="text-[0.9rem] text-ink/70">{p.role}</p>
         </div>
       </div>
-      <p className="text-muted text-[1rem] max-w-[44rem]">{p.headline}</p>
+      <p className="text-muted text-[1.02rem] max-w-[44rem] leading-relaxed">{p.headline}</p>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <Link href={sparHref} className="btn-primary">Start the call →</Link>
+        <Link href={sparHref} className="btn-accent">Start the call →</Link>
         <span className="text-muted text-[0.8rem]">
           Runs the {round?.title ?? p.baseTrack} round — in {p.name.split(" ")[0]}&apos;s voice, grounded in cited facts.
         </span>
@@ -112,7 +112,8 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
                 href={q.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="card-product block hover:border-ink/30 transition-colors"
+                className="card-product card-interactive block border-l-[3px]"
+                style={{ borderLeftColor: "color-mix(in srgb, var(--verified) 40%, transparent)" }}
               >
                 <p className="text-[0.95rem] italic">“{q.text}”</p>
                 <p className="text-muted text-[0.78rem] mt-2">
