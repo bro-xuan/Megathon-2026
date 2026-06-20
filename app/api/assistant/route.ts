@@ -5,28 +5,44 @@
 //
 // Grounded tracks inject the WHOLE prep library (PREP_TARGETS); ungrounded tracks get no packs.
 
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { getPrepPacks } from '@/lib/factpack';
 import { buildAssistant } from '@/lib/vapi-assistant';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
+
+// Persistent Vapi assistant ids (one per track) written by `npm run sync:vapi`. When present we
+// hand the client the dashboard assistant id; the inline `assistant` below stays as the fallback.
+async function persistedAssistantId(trackId: string): Promise<string | undefined> {
+  const file = path.join(process.cwd(), 'data', 'vapi-assistants.json');
+  if (!existsSync(file)) return undefined;
+  try {
+    const map = JSON.parse(await readFile(file, 'utf8')) as Record<string, string>;
+    return map[trackId];
+  } catch {
+    return undefined;
+  }
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const trackId = url.searchParams.get('track')?.trim();
   const candidateName = url.searchParams.get('name')?.trim() || undefined;
-  const track = trackId ? getTrack(trackId) : undefined;
-  if (!track) return Response.json({ error: 'Missing or unknown ?track=' }, { status: 400 });
+  // ElevenLabs voice is opt-in: only used once a VALID 11labs credential is registered in Vapi
+  // (set VAPI_USE_ELEVENLABS=1). Otherwise omit voice → Vapi's built-in default voice, so the
+  // call still works on Groq alone.
+  const useEleven = process.env.VAPI_USE_ELEVENLABS === '1';
+  const voiceId = useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined;
+
   try {
+    const track = trackId ? getTrack(trackId) : undefined;
+    if (!track) return Response.json({ error: 'Missing or unknown ?track=' }, { status: 400 });
     const packs = track.grounded ? await getPrepPacks(PREP_TARGETS) : [];
-    // ElevenLabs voice is opt-in: only used once a VALID 11labs credential is registered in
-    // Vapi (set VAPI_USE_ELEVENLABS=1). Otherwise omit voice → Vapi's built-in default voice,
-    // so the call still works on Groq alone.
-    const useEleven = process.env.VAPI_USE_ELEVENLABS === '1';
-    const assistant = buildAssistant(track, packs, {
-      candidateName,
-      voiceId: useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined,
-    });
+    const assistant = buildAssistant(track, packs, { candidateName, voiceId });
     const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
-    return Response.json({ assistant, factCount });
+    const assistantId = await persistedAssistantId(track.id);
+    return Response.json({ assistant, assistantId, factCount });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to build assistant';
     return Response.json({ error: message }, { status: 502 });

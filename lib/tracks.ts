@@ -67,9 +67,9 @@ export const TRACKS: Track[] = [
     tagline:
       "Pitch a company you've prepped. State a number wrong and he shows you the real one — with the source.",
     firstMessage:
-      "Thanks for coming in. Let's start with a stock pitch — pick any company you've prepped and pitch it to me. Why should we care?",
+      "Thanks for coming in. Let's start with a stock pitch — pick any company you've prepped and pitch it to me. What's your thesis, and what's it worth?",
     focus:
-      'Run a stock-pitch drill. Have the candidate pick one company and pitch it, then probe the thesis, valuation, owners, and recent activity — exactly where bluffs surface.',
+      'Round type: the classic STOCK PITCH. Have the candidate pick one prepped company and pitch it as an investment — thesis, what it is worth, why now. Then attack the numbers a pitch lives or dies on: the current valuation and how it has moved, revenue and growth (and for a loss-maker, the path to profit), who the major backers are, and the catalysts and risks. Anchor every challenge to a specific figure in the pack; a vague pitch is a failed pitch.',
   },
   {
     id: 'markets',
@@ -82,13 +82,13 @@ export const TRACKS: Track[] = [
     grounded: true,
     knows: PREP_TARGETS,
     knowledgeLine: 'Knows Stripe & OpenAI cold — valuation, ownership, funding, IPO status, all cited.',
-    title: 'Defend the valuation',
+    title: 'The deal & the valuation',
     tagline:
-      "Walk through a company's situation and defend what it's worth. Every claim is checked against cited data.",
+      'Talk through a recent deal and defend what the company is worth. The question that is hardest to fake — every claim checked against cited data.',
     firstMessage:
-      "I'll be blunt — I see a lot of pitches. Pick a company you follow and tell me what it's actually worth and why. I'll push.",
+      "I'll be blunt — I see a lot of pitches. Pick a company you follow, walk me through a recent deal it did, and then tell me what it's actually worth. I'll push.",
     focus:
-      'Run a markets / company-deep-dive drill. Push on current valuation, ownership, funding, IPO status, and recent news — the facts a candidate is most likely to get wrong.',
+      "Round type: the DEAL DISCUSSION + VALUATION grilling — the commercial question that is hardest to fake. First make the candidate walk through a recent deal the company did (an acquisition or a funding round) — rationale, price, and who paid whom (e.g. Stripe acquiring Bridge or weighing PayPal; OpenAI's mega-rounds, Tomoro, or the DeployCo backing). Then make them defend the current valuation against the fundamentals — for a loss-maker like OpenAI, the operating loss vs. the multiple; for a private name like Stripe, how tender-offer pricing and liquidity work without an IPO. Pounce on any deal detail, price, or backer that contradicts the cited data.",
   },
   {
     id: 'behavioral',

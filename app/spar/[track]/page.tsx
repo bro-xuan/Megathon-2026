@@ -49,7 +49,16 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
       vapi.on("error", (e: unknown) => {
-        setError(e instanceof Error ? e.message : "Vapi error");
+        // Vapi emits a structured object, not an Error — dig out the real message.
+        console.error("[vapi error]", e);
+        const err = e as { error?: { message?: string }; errorMsg?: string; message?: string; msg?: string };
+        const detail =
+          err?.error?.message ??
+          err?.errorMsg ??
+          err?.message ??
+          err?.msg ??
+          (typeof e === "string" ? e : JSON.stringify(e));
+        setError(detail || "Vapi error (see console)");
         setPhase("error");
       });
       vapi.on("message", (msg: { type?: string; role?: string; transcript?: string; transcriptType?: string }) => {
@@ -60,7 +69,9 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
           ]);
         }
       });
-      await vapi.start(data.assistant);
+      // Prefer the persistent dashboard assistant (npm run sync:vapi); fall back to the inline
+      // config so the call still works before any sync / as venue insurance.
+      await vapi.start(data.assistantId ?? data.assistant);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to start call");
       setPhase("error");

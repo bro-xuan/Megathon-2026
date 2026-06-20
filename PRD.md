@@ -49,7 +49,9 @@ we deliberately steer the interview toward the three things only Cala can do, an
    entity-relationship data and the thing an LLM cannot reproduce reliably. Note the split:
    the **relationship _data_ is load-bearing** (it lives in the fact pack and renders fine as a
    cited list), while the **force-graph _visualization_ (M4) stays the cut line** — pretty, not
-   essential.
+   essential. Its primary home is the **scored debrief graph** (§9 post-call): the same network,
+   colored 🟢 verified / 🔴 bluffed / ⚪️ unexplored by what happened in the call — a memorable
+   closer layered on top of the guaranteed claim list, never replacing it.
 3. **(Flourish) Ground the interviewer too.** Where time allows, the interviewer persona is a
    *real* bank instantiated from Cala (e.g. "an MD at [real bank] that just closed [real
    deal]"), so Cala powers both sides of the table.
@@ -93,14 +95,17 @@ Landing ──► Schedule ──► Spar ──► Debrief
 - **Spar mode** — live Vapi voice mock interview grounded in the pre-fetched fact pack.
   On the critical path.
 - **Fact-check + Debrief** — post-call transcript with bluffs flagged and **sourced**, plus
-  a simple score. *This is the differentiator — protect it.* On the critical path.
+  a simple score. *This is the differentiator — protect it.* On the critical path. The
+  **scored debrief graph** (🟢/🔴/⚪️ over the relationship network, §9) is the hero visual
+  layered on top of this — pure upside, cut-able to the claim list.
 - **Schedule** — a **faked Cal-style scheduling** screen (book a slot → "Join now" starts the
   call immediately) that frames Spar as a real interview ritual. On the critical path.
 - **Study mode** — **optional, off the critical path.** A judge-facing **Cala showcase**: a few
   credible cited fact cards with source links front-and-center, reachable from Landing
   ("see what we know about this company"). The candidate does **not** need to read it to
-  interview — its job is to make the Cala data *visible and provably real*. Knowledge graph
-  (M4) is pure upside layered on top.
+  interview — its job is to make the Cala data *visible and provably real*. The knowledge-graph
+  visualization (M4) is pure upside; its primary payoff is the **scored debrief graph** (§9),
+  with Study mode an optional second home for the same component.
 - **Visible Cala moment** — because the pack is pre-fetched into JSON, Cala is otherwise
   *invisible* and judges may assume we scraped the web. Surface a deliberate, visible
   **"Querying Cala.ai for [Company]'s entity network…"** beat (on Schedule "Join" / Spar entry)
@@ -135,8 +140,10 @@ Landing ──► Schedule ──► Spar ──► Debrief
    *(Fact-check / Debrief — the differentiator)*
 4. As a judge/curious user, I open the optional Study screen and see the company's cited facts
    — proving the data Greenroom grounds on is real and sourced. *(Study — Cala showcase)*
-5. As a candidate, I explore the company's relationships (owners, funders, board) as a graph
-   where each edge links to its source. *(Study — graph, pure upside / cut-able)*
+5. As a candidate, after the call I see the company's relationship network as a graph where
+   each node is colored by how I handled it — 🟢 verified, 🔴 bluffed (links to the source),
+   ⚪️ never explored — so I can see both what I got wrong *and* what I never thought to probe.
+   *(Debrief — scored graph, the hero visual; pure upside / cut-able to the claim list)*
 
 ## 7. Success criteria
 
@@ -200,6 +207,18 @@ reliable post-call Claude pass.
    "*N of M claims verified against source*" with a working link per claim, plus the flagged
    bluffs. The wall of working citations is the Cala wow — density, not just presence.
 
+   **The scored debrief graph (the hero visual, layered on the same `DebriefResult`).** Render
+   the fact-pack relationship network as a graph, colored by what happened in the call:
+   🟢 **green** = discussed and verified, 🔴 **red** = bluffed (the flagged claim — pulses,
+   links to the dated source), ⚪️ **grey** = never explored. The grey is a *coverage* insight
+   no other tool gives ("you never probed their likely acquirer or board"), not just a
+   correctness one. The mapping claim→node is **model-emitted** (`ClaimCheck.entityId`), not a
+   brittle post-match. **It sits on top of the claim list, never replacing it:** the list is the
+   undeniable receipts (judges can't read 15 source URLs off a node cloud), the graph is the
+   memorable closer — click a red node → scroll to that flagged claim + source. If the graph
+   isn't done by demo time, the full sourced scorecard still stands (it stays layered upside,
+   the cut line holds — see §5).
+
 **Route / file map:**
 ```
 app/page.tsx                  Landing: pick scenario (IB) + target
@@ -228,8 +247,10 @@ type FactPack = { target: string; entityId: string; summary: string;
 type FactCheckFlag = { quote: string; issue: string; correctValue: string;
                        sourceUrl: string; severity: "low" | "medium" | "high" };
 // Citation-dense scorecard: every claim the candidate made, checked against the pack.
+// `entityId` is emitted BY the debrief LLM (not post-matched) so each claim maps cleanly
+// onto a fact-pack node → powers the colored debrief graph (see §9 post-call).
 type ClaimCheck = { quote: string; verdict: "verified" | "flagged" | "unverifiable";
-                    sourceUrl?: string; correctValue?: string };
+                    sourceUrl?: string; correctValue?: string; entityId?: string };
 type DebriefResult = { claims: ClaimCheck[]; flags: FactCheckFlag[];
                        verifiedCount: number; totalClaims: number; score: number };
 ```
