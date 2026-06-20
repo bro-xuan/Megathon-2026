@@ -14,109 +14,118 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
   if (!p) notFound();
 
   const round = getTrack(p.baseTrack);
+  const firstName = p.name.split(" ")[0];
   const sparHref = `/spar/${encodeURIComponent(p.baseTrack)}?persona=${encodeURIComponent(p.slug)}`;
+
+  // A dossier card that packs tight in the masonry (no row-stretch gaps).
+  function Card({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
+    return (
+      <div className="card-product break-inside-avoid mb-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="label-eyebrow">{title}</span>
+          {aside}
+        </div>
+        {children}
+      </div>
+    );
+  }
 
   function List({ items }: { items: string[] }) {
     if (!items.length) return <p className="text-muted text-[0.85rem]">—</p>;
     return (
       <ul className="flex flex-col gap-1.5">
         {items.map((x, i) => (
-          <li key={i} className="text-[0.9rem]">{x}</li>
+          <li key={i} className="text-[0.88rem] leading-snug">{x}</li>
         ))}
       </ul>
     );
   }
 
   return (
-    <main className="container-page py-[3rem] flex flex-col gap-[1.75rem] flex-1">
+    <main className="container-page py-[2.5rem] flex flex-col gap-7 flex-1">
       <div className="flex items-center justify-between">
         <Link href="/persona" className="label-eyebrow hover:text-ink">← Distilled people</Link>
         <span className="label-eyebrow">dossier</span>
       </div>
 
-      {/* Header */}
-      <div className="flex items-center gap-4 max-w-[48rem] reveal">
-        <div className="w-[4.5rem] h-[4.5rem] shrink-0 rounded-full avatar-accent flex items-center justify-center font-display text-[1.4rem] shadow-md">
-          {p.avatar}
-        </div>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-display text-[1.8rem] leading-tight">{p.name}</h1>
-            <span className="source-chip">◆ distilled · {p.sources.length} sources</span>
+      {/* Masthead — identity on the left, the call CTA pinned right so the row fills the width. */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between reveal">
+        <div className="flex items-start gap-4 max-w-[42rem]">
+          <div className="w-[4rem] h-[4rem] shrink-0 rounded-full avatar-accent flex items-center justify-center font-display text-[1.3rem] shadow-md">
+            {p.avatar}
           </div>
-          <p className="text-[0.9rem] text-ink/70">{p.role}</p>
-        </div>
-      </div>
-      <p className="text-muted text-[1.02rem] max-w-[44rem] leading-relaxed">{p.headline}</p>
-
-      <div className="flex items-center gap-3 flex-wrap">
-        <Link href={sparHref} className="btn-accent">Start the call →</Link>
-        <span className="text-muted text-[0.8rem]">
-          Runs the {round?.title ?? p.baseTrack} round — in {p.name.split(" ")[0]}&apos;s voice, grounded in cited facts.
-        </span>
-      </div>
-
-      <div className="grid gap-[1.5rem] md:grid-cols-2 max-w-[52rem]">
-        {/* Objective + opening */}
-        <div className="card-product flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <span className="label-eyebrow">What they&apos;re evaluating</span>
-            <p className="text-[0.92rem]">{p.objective}</p>
-          </div>
-          <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="label-eyebrow">Opening line</span>
-              <VoicePreview text={p.firstMessage} name={p.name} seed={p.slug} />
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-display text-[1.7rem] leading-tight">{p.name}</h1>
+              <span className="source-chip">◆ distilled · {p.sources.length} sources</span>
             </div>
-            <p className="text-[0.92rem] italic">“{p.firstMessage}”</p>
+            <p className="text-[0.88rem] text-ink/70">{p.role}</p>
+            <p className="text-muted text-[0.96rem] leading-relaxed mt-0.5">{p.headline}</p>
           </div>
         </div>
 
-        {/* Voice & style */}
-        <div className="card-product flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="label-eyebrow">Tone</span>
-            <p className="text-[0.9rem]">{p.style.tone}</p>
-          </div>
-          <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-            <span className="label-eyebrow">Cadence</span>
-            <p className="text-[0.9rem]">{p.style.cadence}</p>
-          </div>
+        <div className="flex flex-col gap-2 shrink-0 lg:items-end">
+          <Link href={sparHref} className="btn-accent">Start the call →</Link>
+          <span className="text-muted text-[0.76rem] max-w-[15rem] lg:text-right">
+            Runs the {round?.title ?? p.baseTrack} round — in {firstName}&apos;s voice, grounded in cited facts.
+          </span>
         </div>
+      </div>
 
-        <div className="card-product flex flex-col gap-2">
-          <span className="label-eyebrow">Pet topics</span>
-          <div className="flex flex-wrap gap-2">
+      {/* Dossier cards — masonry so variable-height cards pack tight with no stretched gaps. */}
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
+        <Card title="What they're evaluating">
+          <p className="text-[0.9rem] leading-snug">{p.objective}</p>
+        </Card>
+
+        <Card
+          title="Opening line"
+          aside={<VoicePreview text={p.firstMessage} name={p.name} seed={p.slug} />}
+        >
+          <p className="text-[0.9rem] italic leading-snug">“{p.firstMessage}”</p>
+        </Card>
+
+        <Card title="Tone">
+          <p className="text-[0.88rem] leading-snug">{p.style.tone}</p>
+        </Card>
+
+        <Card title="Cadence">
+          <p className="text-[0.88rem] leading-snug">{p.style.cadence}</p>
+        </Card>
+
+        <Card title="Pet topics">
+          <div className="flex flex-wrap gap-1.5">
             {p.style.petTopics.length
               ? p.style.petTopics.map((t) => <span key={t} className="source-chip">{t}</span>)
               : <span className="text-muted text-[0.85rem]">—</span>}
           </div>
-          <span className="label-eyebrow mt-3">Signature phrases</span>
-          <List items={p.style.signaturePhrases} />
-        </div>
+        </Card>
 
-        <div className="card-product flex flex-col gap-2">
-          <span className="label-eyebrow">How they catch a weak answer</span>
+        <Card title="Signature phrases">
+          <List items={p.style.signaturePhrases} />
+        </Card>
+
+        <Card title="How they catch a weak answer">
           <List items={p.style.tells} />
-        </div>
+        </Card>
       </div>
 
-      {/* Cited verbatim voice */}
+      {/* Cited verbatim voice — masonry of quote cards. */}
       {p.quotes.length > 0 && (
-        <section className="flex flex-col gap-3 max-w-[52rem]">
-          <h2 className="font-display text-[1.2rem]">In their own words <span className="text-muted text-[0.8rem] font-normal">· cited</span></h2>
-          <div className="flex flex-col gap-3">
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-[1.15rem]">In their own words <span className="text-muted text-[0.78rem] font-normal">· cited</span></h2>
+          <div className="columns-1 md:columns-2 xl:columns-3 gap-4">
             {p.quotes.map((q, i) => (
               <a
                 key={i}
                 href={q.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="card-product card-interactive block border-l-[3px]"
+                className="card-product card-interactive break-inside-avoid mb-4 block border-l-[3px]"
                 style={{ borderLeftColor: "color-mix(in srgb, var(--verified) 40%, transparent)" }}
               >
-                <p className="text-[0.95rem] italic">“{q.text}”</p>
-                <p className="text-muted text-[0.78rem] mt-2">
+                <p className="text-[0.9rem] italic leading-snug">“{q.text}”</p>
+                <p className="text-muted text-[0.74rem] mt-2">
                   {q.context ? q.context + " · " : ""}{q.sourceName ?? q.sourceUrl} →
                 </p>
               </a>
@@ -125,14 +134,14 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
         </section>
       )}
 
-      {/* Cited knowledge */}
+      {/* Cited knowledge — two-column dense list. */}
       {p.knowledge.facts.length > 0 && (
-        <section className="flex flex-col gap-3 max-w-[52rem]">
-          <h2 className="font-display text-[1.2rem]">Cited background</h2>
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-[1.15rem]">Cited background</h2>
           {/* Labels come from the company-oriented classifier, so we show value + source only. */}
-          <ul className="flex flex-col gap-2">
+          <ul className="columns-1 md:columns-2 gap-x-8">
             {p.knowledge.facts.map((f, i) => (
-              <li key={i} className="text-[0.9rem]">
+              <li key={i} className="text-[0.88rem] leading-snug break-inside-avoid mb-2.5">
                 {f.value}{" "}
                 <a href={f.sourceUrl} target="_blank" rel="noreferrer" className="source-chip ml-1">
                   {f.sourceName ?? "source"} →
