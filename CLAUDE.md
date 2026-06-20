@@ -37,8 +37,9 @@ Read this first. Then `PRD.md` (what/why + architecture), `DESIGN.md` (UI), `TAS
 - Deploy: push to `main` → Vercel (set env vars in dashboard).
 
 ## Env vars (see `.env.example`)
-Server-only: `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `ANTHROPIC_API_KEY`,
-optional `ELEVENLABS_API_KEY`, `DEEPGRAM_API_KEY`,
+Server-only: `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `GROQ_API_KEY` (live interviewer),
+`ANTHROPIC_API_KEY` and/or `GLM_API_KEY` (debrief reasoner),
+optional `ELEVENLABS_API_KEY` (+ `ELEVENLABS_VOICE_ID`), `DEEPGRAM_API_KEY`,
 optional `MOLLIE_API_KEY` (test key, only for the M5 paywall stretch).
 Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
@@ -50,6 +51,17 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 - Don't touch Mollie until the full product works — the paywall (M6) is the **last** step.
 
 ## Decision log & API quirks (append newest at top)
+
+**Decisions (2026-06-20):** Split the interviewer LLM by latency. **Live (Spar) = Groq
+`llama-3.3-70b-versatile`** via Vapi BYO key — measured **~0.2s TTFB** streaming (vs ~1.7s
+GLM, ~0.7–1s Claude Haiku). Live model is **grounded-only**: it answers from the injected
+fact pack and must NOT fact-check from its own memory (all tested models, incl. 70B,
+hallucinate company facts; `llama-3.1-8b-instant` is faster but worst — rejected).
+**Debrief (post-call) = Claude or GLM-5.2** — latency-insensitive, use the stronger reasoner;
+this is where the "Claude" story now lives. Z.ai coding-plan endpoint
+`https://api.z.ai/api/coding/paas/v4` (OpenAI-compatible) serves GLM up to **glm-5.2**
+(verified via `GET /models`); GLM models are hybrid-reasoning → pass `thinking:{type:"disabled"}`
+for any latency-sensitive call. Repo helper: `node scripts/glm-review.mjs <file>`.
 
 **Decisions (2026-06-19):** Cala + Vapi are load-bearing (both prizes). Wispr Flow dropped
 (API partnership-gated). Fact-check = pre-fetched cited fact pack + post-call Claude pass
@@ -68,5 +80,15 @@ server-side. `vapi.start(config, overrides)`; per-call context via
 `assistantOverrides.variableValues` (nested). Custom tools POST to `server.url` <1s in-turn
 (we avoid via pre-fetch). LLMs Anthropic/OpenAI/custom; STT Deepgram, TTS ElevenLabs; BYO
 keys → $0 passthrough; $10 free credit. Timestamped transcript via `GET /call/{id}`.
+LLM providers incl. **Groq** (`provider:"groq"`, `model:"llama-3.3-70b-versatile"`).
+
+**Groq (verified 2026-06-20):** OpenAI-compatible at
+`https://api.groq.com/openai/v1/chat/completions`. `llama-3.3-70b-versatile` measured
+~170–240ms TTFB (streaming) — our live interviewer. `llama-3.1-8b-instant` ~140ms but
+hallucinates facts → don't use for grounding.
 
 **Gotchas:** _(append as discovered)_
+- GLM (Z.ai) models are hybrid-reasoning: without `thinking:{type:"disabled"}` they spend the
+  whole `max_tokens` budget on hidden `reasoning_content` and return empty `content`.
+- Don't trust ANY live model's recall of company facts (Groq 70B included) — it invents
+  acquirers/dates. Grounding via injected fact pack is load-bearing, not optional.

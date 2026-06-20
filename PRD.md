@@ -111,10 +111,10 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 | Framework | **Next.js 15 (App Router) + TypeScript** | One app: React UI for Vapi Web SDK + server routes hide keys. |
 | Styling | **Tailwind CSS** + fluid `clamp()` root font, `rem` units | Per global responsive rules (Retina-safe sizing). |
 | Voice | **Vapi Web SDK** `@vapi-ai/web` | Browser-mic agent, barge-in, live transcript. **Public** key in browser; private key server-side. |
-| Interviewer LLM | **Claude (Anthropic) via Vapi**, bring-your-own key | Strong instruction-following; $0 provider passthrough. Fallback: OpenAI gpt-4o if the Anthropic path is finicky. |
+| Interviewer LLM (live) | **Groq `llama-3.3-70b-versatile` via Vapi**, bring-your-own key | Chosen for latency: **~0.2s TTFB** (vs ~1.7s for GLM, ~0.7–1s for Claude Haiku) — measured streaming. $0 passthrough. **Grounded only** (relies on injected fact pack; never fact-checks live). Avoid `llama-3.1-8b-instant`: faster but hallucinates facts. Fallback: OpenAI gpt-4o-mini. |
 | STT / TTS | **Deepgram** (nova) / **ElevenLabs** (`11labs`) | Vapi-managed defaults; pick a credible interviewer voice. |
 | Grounded data | **Cala.ai REST** `https://api.cala.ai`, header `X-API-KEY` | Tools: `entity_search` → UUID, `retrieve_entity` → profile+relationships, `knowledge_search` → cited prose+entities. **Server-side only.** |
-| Debrief pass | **Anthropic SDK** `@anthropic-ai/sdk` | Post-call: transcript + fact pack → structured `{flags, scores}`. |
+| Debrief LLM (post-call) | **Claude (Anthropic SDK)** or **GLM-5.2 (Z.ai)** | Latency doesn't matter here → use the stronger reasoner. Post-call: transcript + fact pack → structured `{flags, scores}`. This is where the "Claude" story lives now that the live turn is Groq. |
 | Graph viz | **react-force-graph-2d** | Cited knowledge graph in Study mode; cut-able → card fallback. |
 | Cache/state | In-memory + `data/factpacks/*.json` | Protects Cala credits; packs survive reloads. |
 | Deploy | **Vercel** | Zero-config Next.js + serverless routes + public URL. |
@@ -126,12 +126,13 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 
 **Vapi facts that constrain design** (from research): Web SDK uses public key; custom
 tools POST to your `server.url` **synchronously inside the turn** (keep <1s — we avoid this
-via pre-fetch); supports Anthropic/OpenAI LLMs and bring-your-own keys ($0 passthrough);
+via pre-fetch); supports Anthropic/OpenAI/**Groq** LLMs and bring-your-own keys ($0 passthrough);
 $10 free signup credit; timestamped transcript via `GET /call/{id}`; per-call context via
 `assistantOverrides.variableValues`. Docs: `docs.vapi.ai`.
 
 **Env vars:** `CALA_API_KEY`, `VAPI_PRIVATE_KEY`, `NEXT_PUBLIC_VAPI_PUBLIC_KEY`,
-`ANTHROPIC_API_KEY`, optional `ELEVENLABS_API_KEY` / `DEEPGRAM_API_KEY`.
+`GROQ_API_KEY` (live interviewer), `ANTHROPIC_API_KEY` and/or `GLM_API_KEY` (debrief),
+optional `ELEVENLABS_API_KEY` (+ `ELEVENLABS_VOICE_ID`) / `DEEPGRAM_API_KEY`.
 
 ## 9. Architecture
 
@@ -143,8 +144,10 @@ reliable post-call Claude pass.
 **Three phases:**
 1. **Pre-call:** `/api/factpack` queries Cala → normalized cited fact pack → cached JSON →
    injected into the Vapi interviewer's system prompt as ground truth.
-2. **Live (Spar):** Vapi assistant challenges claims against injected facts; transcript
-   captured via Web SDK `message` events.
+2. **Live (Spar):** Vapi assistant (Groq `llama-3.3-70b-versatile`, ~0.2s TTFB) challenges
+   claims against the **injected facts only** — it must not freelance corrections from its own
+   memory (it demonstrably hallucinates them); live correction is out of scope, fact-checking
+   is the debrief's job. Transcript captured via Web SDK `message` events.
 3. **Post-call (Debrief):** `/api/call/[id]` pulls the timestamped transcript;
    `/api/debrief` runs Claude to compare statements vs fact pack → structured, sourced
    flags + score.
