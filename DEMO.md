@@ -13,15 +13,17 @@ LLM gets wrong, which Cala proves with a deep-linked source.
   Collison; backers Sequoia / a16z / Goldman; board incl. Mark Carney.
 
 ## Secondary — OpenAI  (`data/factpacks/openai.json`)
-- 15 cited facts · 43 relationship entities · summary 6.4k chars · entityId resolved.
+- 9 cited facts · 31 relationship entities · summary 3.6k chars · entityId resolved.
+  (Rebuilt 2026-06-20: the long compound query tripped Cala's "too complex" guard and cached
+  an empty pack — `buildFactPack` now retries simpler queries; see `lib/factpack.ts`.)
 - **THE CATCH:** candidate says "OpenAI is private, no IPO" →
-  Cala: **confidentially filed for IPO (June 2026), Q4 2026 listing, $852B–$1T valuation**.
-  Primary source ⚠️ Bloomberg 403s for bots (works in-browser but consent/paywall):
-  <https://www.bloomberg.com/news/articles/2026-03-31/openai-valued-at-852-billion-after-completing-122-billion-round>
-  Cleaner alt source in the pack (TechCrunch, Jun 18 2026):
-  <https://techcrunch.com/2026/06/18/openai-is-bringing-on-some-big-guns-in-the-lead-up-to-its-ipo/>
-  → **TODO (M5 polish):** prefer the TechCrunch link over Bloomberg for the headline catch.
-- Supporting catches: Sora shut down (Mar 2026); Microsoft ~49% stake; Sam Altman holds no equity.
+  Cala fact #5: **OpenAI has filed SEC paperwork for a potential IPO in 2026** (recruited Noam
+  Shazeer & Dean Ball ahead of the offering); summary carries the **$852B (Mar 2026) valuation,
+  $122B round**.
+  Source ✅ HTTP 200 (bot-friendly — no Bloomberg paywall): Ars Technica, Jun 2026
+  <https://arstechnica.com/ai/2026/06/leaked-financial-docs-show-openai-is-losing-billions-of-dollars-a-year/>
+- Supporting: $157B → $300B → $852B valuation ladder; investors SoftBank (lead, $40B 2025 round)
+  / Microsoft / NVIDIA / Thrive; acquired Tomoro; launched DeployCo consulting (Jun 2026).
 
 ## Demo arc (rehearse)
 1. Land → Schedule → "Join now" (visible "Querying Cala.ai…" beat).

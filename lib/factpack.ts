@@ -19,9 +19,21 @@ export function slugify(target: string): string {
   return target.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-/** A richer query than a bare name → maximizes coverage of the relationship network. */
-function searchInput(target: string): string {
-  return `${target}: overview, founders, owners, investors, board members, competitors, valuation, recent acquisitions, CEO and leadership changes, funding rounds, and latest news.`;
+// Cala rejects over-long compound queries for some entities with a degenerate
+// "too complex…" summary (0 facts). Try a moderately rich query first, then fall
+// back to progressively simpler ones so a curated company never caches empty.
+function searchInputs(target: string): string[] {
+  return [
+    `${target} company overview, valuation, investors, and recent news`,
+    `${target} valuation, IPO plans, and major investors in 2026`,
+    `${target} overview and valuation`,
+    target,
+  ];
+}
+
+/** A degenerate Cala response carries no citable facts (e.g. the "too complex" punt). */
+function isDegenerate(pack: FactPack): boolean {
+  return pack.facts.length === 0 || /too complex/i.test(pack.summary);
 }
 
 /** Prefer a deep article link (has a real path) over a bare homepage. */
@@ -111,10 +123,16 @@ export function normalize(target: string, raw: KnowledgeSearchResult, fetchedAt:
   };
 }
 
-/** Build a fresh pack from Cala (no cache). */
+/** Build a fresh pack from Cala (no cache), retrying simpler queries on a degenerate result. */
 export async function buildFactPack(target: string): Promise<FactPack> {
-  const raw = await knowledgeSearch(searchInput(target));
-  return normalize(target, raw, new Date().toISOString());
+  let last: FactPack | null = null;
+  for (const input of searchInputs(target)) {
+    const raw = await knowledgeSearch(input);
+    const pack = normalize(target, raw, new Date().toISOString());
+    if (!isDegenerate(pack)) return pack;
+    last = pack; // keep the most recent attempt as a fallback
+  }
+  return last ?? normalize(target, { content: '', context: [], explainability: [], entities: [] }, new Date().toISOString());
 }
 
 /** Cache-first: read data/factpacks/<slug>.json, else build + persist. */

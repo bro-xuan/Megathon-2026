@@ -1,8 +1,228 @@
 {
   "target": "OpenAI",
-  "entityId": "",
-  "summary": "This question is too complex to answer fully. Please try breaking it into smaller, more specific questions.",
-  "facts": [],
-  "relationships": [],
-  "fetchedAt": "2026-06-20T08:48:09.804Z"
+  "entityId": "0ac03ffd-ebde-413d-b9e2-c2cb2299b633",
+  "summary": "# OpenAI — Company Overview\n\n## About\n\nOpenAI is an AI research company co-founded by Elon Musk and Sam Altman, headquartered at 1455 3rd Street, San Francisco, California, USA. The company is the creator of ChatGPT and other large language models. Its CEO is **Sam Altman**. OpenAI has approximately **4,500 employees** and operates across industries including software & services, fintech, and advertising/marketing.\n\n- **Legal name:** OpenAI OpCo, LLC\n- **Website:** openai.com\n\n---\n\n## Valuation History\n\n| Date | Valuation | Funding Raised |\n|------|-----------|----------------|\n| Oct 2024 | $157 billion | $6.6 billion |\n| Mar 2025 | $300 billion | $40 billion (largest funding round ever at the time) |\n| Mar 2026 | **$852 billion** | **$122 billion** (initiated Feb 2026 targeting $110B at $730B pre-money) |\n\nOpenAI's most recent funding round closed in early 2026 with $122 billion in committed capital at a post-money valuation of **$852 billion**. The company reportedly may go public (IPO) later in 2026 and has filed SEC paperwork ahead of an expected offering.\n\n---\n\n## Key Investors\n\nOpenAI's investors include:\n\n- **SoftBank Group** — led the $40B round in March 2025\n- **Microsoft Corporation** — longtime backer and exclusive cloud provider (Azure)\n- **NVIDIA Corporation**\n- **Amazon**\n- **Thrive Capital** — led the October 2024 round ($1.2B+)\n- **Andreessen Horowitz (a16z)**\n- **Founders Fund**\n- **Sequoia Capital**\n- **Tiger Global Management**\n- **Insight Partners**\n- **Fidelity Investments**\n- **Sands Capital**\n- **Booking.com**\n- **Cisco Systems**\n\n---\n\n## Financials\n\n### Revenue\n- **2024:** $3.7 billion\n- **2025:** $13.07 billion (more than tripling year-over-year)\n- **Q1 2026:** $5.7 billion in revenue\n- ~700 million weekly active ChatGPT users; enterprise customers account for more than 40% of revenue\n\n### Costs & Losses (2025)\n- Cost of revenue: $7.5 billion\n- R&D: $19.18 billion\n- Sales & marketing: $5.73 billion\n- **Total costs & expenses:** ~$34 billion\n- **Operating loss:** $20.92 billion\n- Adjusted loss (stripping one-time conversion charges): ~$8 billion\n\n### Cash Position\n- More than $73 billion in cash and marketable securities at end of Q1 2026\n\n### Burn Rate\n- $3.7 billion cash burn in Q1 2026\n\nOpenAI expects more than $280 billion in total revenue by 2030 and is targeting ~$600 billion in compute spend through 2030.\n\n---\n\n## Recent News (June 2026)\n\n- **IPO preparations:** OpenAI has filed SEC paperwork and reportedly could go public this year. The company recruited Noam Shazeer (co-author of \"Attention Is All You Need,\" formerly of Google DeepMind) and Dean Ball (former White House advisor) ahead of the IPO.\n- **Leaked financials:** Audited financial statements leaked in June 2026 showing $13.07B in 2025 revenue against $20.9B in operating losses, drawing scrutiny ahead of the expected S-1 filing.\n- **DeployCo launch:** OpenAI established a new AI consulting business (\"DeployCo\") with over $4 billion in backing from TPG, Advent, Bain Capital, and Brookfield, targeting large enterprise customers with custom AI solutions.\n- **Pentagon deployment:** ChatGPT is set to debut on the Pentagon's GenAI.mil platform in early July 2026 for sensitive but unclassified work.\n- **AI safety research:** OpenAI published a new \"Deployment Simulation\" method to forecast AI risks before deployment, addressing the problem that models behave differently when they know they're being tested.\n- **Acquisition:** OpenAI agreed to acquire UK-based AI firm Tomoro, adding approximately 150 engineers and deployment staff.",
+  "facts": [
+    {
+      "claim": "CEO",
+      "value": "OpenAI is an AI research company founded in 2018 in San Francisco by Elon Musk and Sam Altman, with legal name OpenAI OpCo, LLC, headquartered at 1455 3rd Street, San Francisco, and employing approximately 4,500 people; Sam Altman is the CEO.",
+      "sourceUrl": "https://vcsheet.com/",
+      "sourceName": "https://vcsheet.com/who/pamela-vagata",
+      "category": "people"
+    },
+    {
+      "claim": "Valuation",
+      "value": "The company’s valuation history shows a $157 billion post‑money valuation after a $6.6 billion round in October 2024, a $300 billion valuation after a $40 billion round in March 2025, and a $852 billion valuation after a $122 billion round in early 2026.",
+      "sourceUrl": "https://www.forbes.com/sites/antoniopequenoiv/2024/10/02/openai-valued-at-157-billion-after-closing-66-billion-funding-round",
+      "sourceName": "Forbes",
+      "category": "ownership"
+    },
+    {
+      "claim": "Founders",
+      "value": "Key investors include SoftBank Group (lead investor in the $40 billion 2025 round), Microsoft, NVIDIA, Amazon, Thrive Capital, Andreessen Horowitz, Founders Fund, Sequoia Capital, Tiger Global Management, Insight Partners, Fidelity Investments, Sands Capital, Booking.com, and Cisco Systems, as listed in the company’s incoming investment relationships.",
+      "sourceUrl": "https://vcsheet.com/",
+      "sourceName": "https://vcsheet.com/who/pamela-vagata",
+      "category": "people"
+    },
+    {
+      "claim": "Financials",
+      "value": "Financially, OpenAI reported $3.7 billion revenue in 2024, $13.07 billion revenue in 2025 (more than tripling YoY), and $5.7 billion revenue in Q1 2026; operating losses rose to $20.92 billion in 2025, with total costs and expenses of about $34 billion driven by $19.18 billion R&D and $5.73 billion sales & marketing.",
+      "sourceUrl": "https://arstechnica.com/ai/2026/06/leaked-financial-docs-show-openai-is-losing-billions-of-dollars-a-year/",
+      "sourceName": "Ars Technica",
+      "category": "recent"
+    },
+    {
+      "claim": "Financials",
+      "value": "At the end of Q1 2026 the company held more than $73 billion in cash and marketable securities, despite a $3.7 billion cash burn in the same quarter.",
+      "sourceUrl": "https://www.investing.com/news/stock-market-news/openai-burned-37-billion-in-first-quarter-of-2026-the-information-93CH-4746236",
+      "sourceName": "investing.com",
+      "category": "recent"
+    },
+    {
+      "claim": "IPO",
+      "value": "Recent news indicates OpenAI has filed SEC paperwork for a potential IPO in 2026, recruited Noam Shazeer and Dean Ball ahead of the offering, and leaked audited financials showing the 2025 revenue and loss figures.",
+      "sourceUrl": "https://arstechnica.com/ai/2026/06/leaked-financial-docs-show-openai-is-losing-billions-of-dollars-a-year/",
+      "sourceName": "Ars Technica",
+      "category": "ownership"
+    },
+    {
+      "claim": "Investors",
+      "value": "In June 2026 OpenAI launched a new AI consulting business called DeployCo, backed by over $4 billion from TPG, Advent, Bain Capital, and Brookfield, to serve large enterprise customers.",
+      "sourceUrl": "https://www.forbes.com/sites/terdawn-deboe/2026/06/16/openai-just-started-selling-what-your-consulting-business-sells/",
+      "sourceName": "Forbes",
+      "category": "ownership"
+    },
+    {
+      "claim": "Recent",
+      "value": "OpenAI announced that ChatGPT will be deployed on the Pentagon’s GenAI.mil platform in early July 2026 for sensitive but unclassified work.",
+      "sourceUrl": "https://www.defenseone.com/defense-systems/2026/06/chatgpt-debut-pentagon-openai/414237/",
+      "sourceName": "Defense One",
+      "category": "recent"
+    },
+    {
+      "claim": "Acquisitions",
+      "value": "OpenAI agreed to acquire UK‑based AI firm Tomoro, adding roughly 150 engineers and deployment staff to its workforce.",
+      "sourceUrl": "https://www.forbes.com/sites/terdawn-deboe/2026/06/16/openai-just-started-selling-what-your-consulting-business-sells/",
+      "sourceName": "Forbes",
+      "category": "ownership"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Person",
+      "from": "OpenAI",
+      "to": "Elon Musk"
+    },
+    {
+      "type": "Person",
+      "from": "OpenAI",
+      "to": "Sam Altman"
+    },
+    {
+      "type": "Location",
+      "from": "OpenAI",
+      "to": "1455 3rd Street, San Francisco, California, USA"
+    },
+    {
+      "type": "Product",
+      "from": "OpenAI",
+      "to": "ChatGPT"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "OPENAI OPCO, LLC"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Softbank Group Corp."
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Microsoft Corporation"
+    },
+    {
+      "type": "Product",
+      "from": "OpenAI",
+      "to": "Azure"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "NVIDIA CORPORATION"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Amazon"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "THRIVE CAPITAL PARTNERS LIMITED"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "Andreessen Horowitz"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Founders Fund"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "Sequoia Capital"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "TIGER GLOBAL MANAGEMENT LLC"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Insight Partners"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "Fidelity Investments"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "SANDS CAPITAL MANAGEMENT, LLC"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Booking.com"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "CISCO SYSTEMS, INC."
+    },
+    {
+      "type": "Person",
+      "from": "OpenAI",
+      "to": "Noam Shazeer"
+    },
+    {
+      "type": "WorkOfArt",
+      "from": "OpenAI",
+      "to": "Attention Is All You Need"
+    },
+    {
+      "type": "Person",
+      "from": "OpenAI",
+      "to": "Dean Ball"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "DeployCo"
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "TPG Inc."
+    },
+    {
+      "type": "Company",
+      "from": "OpenAI",
+      "to": "Advent International, L.P."
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Bain Capital"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Brookfield Corporation"
+    },
+    {
+      "type": "Facility",
+      "from": "OpenAI",
+      "to": "U.S. Pentagon"
+    },
+    {
+      "type": "Product",
+      "from": "OpenAI",
+      "to": "GenAI.mil"
+    },
+    {
+      "type": "Organization",
+      "from": "OpenAI",
+      "to": "Tomoro"
+    }
+  ],
+  "fetchedAt": "2026-06-20T10:12:53.229Z"
 }
