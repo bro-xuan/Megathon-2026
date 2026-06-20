@@ -10,14 +10,27 @@ import type { TranscriptTurn } from "@/lib/types";
 
 type Phase = "idle" | "connecting" | "live" | "debriefing" | "error";
 
+/** A cited topic the interviewer can probe, surfaced live (from /api/assistant). */
+type LiveFact = { claim: string; target: string; sourceName?: string; sourceUrl: string };
+
+function mmss(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export default function SparPage({ params }: { params: Promise<{ track: string }> }) {
   const { track: trackId } = use(params);
   const track = getTrack(trackId);
   const router = useRouter();
 
   const vapiRef = useRef<Vapi | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const startedAtRef = useRef<number | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  const [facts, setFacts] = useState<LiveFact[]>([]);
+  const [elapsed, setElapsed] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState<string>("");
@@ -27,6 +40,21 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       vapiRef.current?.stop();
     };
   }, []);
+
+  // Tick an elapsed-time clock while the call is live (interviews are time-boxed).
+  useEffect(() => {
+    if (phase !== "live") return;
+    const id = setInterval(() => {
+      if (startedAtRef.current) setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  // Keep the transcript pinned to the latest turn so new answers never hide below the fold.
+  useEffect(() => {
+    const el = transcriptRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [turns]);
 
   if (!track) notFound();
 
@@ -42,10 +70,14 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       const res = await fetch(`/api/assistant?track=${encodeURIComponent(track!.id)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load assistant");
+      setFacts(Array.isArray(data.facts) ? data.facts : []);
 
       const vapi = new Vapi(publicKey);
       vapiRef.current = vapi;
-      vapi.on("call-start", () => setPhase("live"));
+      vapi.on("call-start", () => {
+        startedAtRef.current = Date.now();
+        setPhase("live");
+      });
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
       vapi.on("error", (e: unknown) => {
@@ -65,7 +97,12 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
         for (const m of msg.conversation) {
           const text = m.content?.trim();
           if (!text || (m.role !== "user" && m.role !== "assistant" && m.role !== "bot")) continue;
-          next.push({ role: m.role === "user" ? "candidate" : "interviewer", text });
+          const role: TranscriptTurn["role"] = m.role === "user" ? "candidate" : "interviewer";
+          // Coalesce consecutive same-role fragments into one bubble so a single
+          // spoken turn reads as one paragraph instead of several broken lines.
+          const last = next[next.length - 1];
+          if (last && last.role === role) last.text = `${last.text} ${text}`;
+          else next.push({ role, text });
         }
         setTurns(next);
       });
@@ -179,45 +216,78 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
     <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
       <div className="flex items-center justify-between">
         <span className="label-eyebrow">Greenroom · {track!.persona}</span>
-        <span className="label-eyebrow">{phase === "live" ? "● live" : phase}</span>
+        <span className="label-eyebrow">
+          {phase === "live" ? `● live · ${mmss(elapsed)}` : phase}
+        </span>
       </div>
 
       <div className="grid gap-[1.5rem] md:grid-cols-[1.4fr_1fr] flex-1">
-        {/* Interviewer "video" stage (static avatar + speaking state) */}
-        <div className="card-product flex flex-col items-center justify-center gap-4 min-h-[24rem] relative">
-          <div
-            className="w-[8rem] h-[8rem] rounded-full bg-surface border border-border flex items-center justify-center font-display text-[2rem] transition-shadow"
-            style={speaking ? { boxShadow: "0 0 0 0.4rem color-mix(in srgb, var(--ink) 8%, transparent)" } : undefined}
-          >
-            {track!.avatar}
+        {/* Interviewer "video" stage (avatar + speaking state + live facts rail) */}
+        <div className="card-product flex flex-col gap-4 min-h-[24rem] relative">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div
+              className="w-[8rem] h-[8rem] rounded-full bg-surface border border-border flex items-center justify-center font-display text-[2rem] transition-shadow"
+              style={speaking ? { boxShadow: "0 0 0 0.4rem color-mix(in srgb, var(--ink) 8%, transparent)" } : undefined}
+            >
+              {track!.avatar}
+            </div>
+            <div className="text-center">
+              <div className="font-display text-[1.2rem]">{track!.persona}</div>
+              <div className="text-muted text-[0.85rem]">
+                {phase === "live" ? (speaking ? "Speaking…" : "Listening…") : track!.title}
+              </div>
+            </div>
+            {phase === "connecting" && (
+              <p className="text-muted text-[0.85rem]">
+                {grounded ? "Loading your cited prep packs…" : "Connecting…"}
+              </p>
+            )}
+            {phase === "debriefing" && (
+              <p className="text-muted text-[0.85rem]">
+                {grounded ? "Scoring your answers against the sources…" : "Reviewing your delivery…"}
+              </p>
+            )}
+            {phase === "error" && (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>
+                {/* Demo insurance: if the live call won't connect, jump to the precomputed debrief. */}
+                <Link href="/debrief/mock-stripe" className="btn-secondary">
+                  Show sample debrief →
+                </Link>
+              </div>
+            )}
           </div>
-          <div className="text-center">
-            <div className="font-display text-[1.2rem]">{track!.persona}</div>
-            <div className="text-muted text-[0.85rem]">{track!.title}</div>
-          </div>
-          {phase === "connecting" && (
-            <p className="text-muted text-[0.85rem]">
-              {grounded ? "Loading your cited prep packs…" : "Connecting…"}
-            </p>
-          )}
-          {phase === "debriefing" && (
-            <p className="text-muted text-[0.85rem]">
-              {grounded ? "Scoring your answers against the sources…" : "Reviewing your delivery…"}
-            </p>
-          )}
-          {phase === "error" && (
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>
-              {/* Demo insurance: if the live call won't connect, jump to the precomputed debrief. */}
-              <Link href="/debrief/mock-stripe" className="btn-secondary">
-                Show sample debrief →
-              </Link>
+
+          {/* Facts in play — the cited topics the interviewer can probe. This is the
+              differentiator made visible mid-call: bluff one and it surfaces in the debrief. */}
+          {grounded && facts.length > 0 && (phase === "live" || phase === "connecting") && (
+            <div className="border-t border-border pt-4">
+              <div className="label-eyebrow mb-2">
+                Facts in play · grounded in {facts.length} cited facts
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {facts.slice(0, 12).map((f, i) => (
+                  <a
+                    key={`${f.target}-${f.claim}-${i}`}
+                    href={f.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="source-chip"
+                    title={f.sourceName ? `${f.target} · source: ${f.sourceName}` : f.target}
+                  >
+                    {f.target} · {f.claim}
+                  </a>
+                ))}
+                {facts.length > 12 && (
+                  <span className="label-eyebrow self-center">+{facts.length - 12} more</span>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Live transcript rail */}
-        <div className="card-product overflow-auto max-h-[28rem]">
+        <div ref={transcriptRef} className="card-product overflow-auto max-h-[28rem]">
           <div className="label-eyebrow mb-3">
             {grounded ? "Live transcript · grounded in cited facts" : "Live transcript"}
           </div>

@@ -26,7 +26,17 @@ export async function GET(request: Request) {
       voiceId: useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined,
     });
     const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
-    return Response.json({ assistant, factCount });
+    // Slim, client-safe fact list for the live "facts in play" rail — the cited topics
+    // the interviewer can probe. No prompt text leaks; just claim + company + source.
+    const facts = packs.flatMap((p) =>
+      p.facts.map((f) => ({
+        claim: f.claim,
+        target: p.target,
+        sourceName: f.sourceName,
+        sourceUrl: f.sourceUrl,
+      })),
+    );
+    return Response.json({ assistant, factCount, facts });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to build assistant';
     return Response.json({ error: message }, { status: 502 });
