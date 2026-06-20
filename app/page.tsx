@@ -47,7 +47,7 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-3 flex-wrap pt-1">
               <Link href="/start" className="btn-accent text-[0.98rem]">
-                Start an interview →
+                Start practicing →
               </Link>
               <Link href="/debrief/mock-stripe" className="btn-secondary text-[0.95rem]">
                 See a sample debrief
