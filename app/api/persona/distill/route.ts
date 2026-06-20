@@ -11,7 +11,7 @@ import { getTrack } from '@/lib/tracks';
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  let body: { name?: string; baseTrack?: string; roundTitle?: string; links?: string[] };
+  let body: { name?: string; baseTrack?: string; roundTitle?: string; links?: string[]; voiceId?: string };
   try {
     body = await request.json();
   } catch {
@@ -24,13 +24,14 @@ export async function POST(request: Request) {
   const baseTrack = body.baseTrack?.trim() || 'markets';
   const roundTitle = body.roundTitle?.trim() || getTrack(baseTrack)?.title || 'Defend the valuation';
   const links = Array.isArray(body.links) ? body.links : [];
+  const voiceId = typeof body.voiceId === 'string' ? body.voiceId : undefined;
 
   try {
     const { segments, log } = links.length
       ? await fetchCorpus(links)
       : { segments: [], log: [] };
 
-    const profile = await distillPersona(name, { baseTrack, roundTitle, corpus: segments });
+    const profile = await distillPersona(name, { baseTrack, roundTitle, corpus: segments, voiceId });
     await savePersona(profile);
 
     return Response.json({ profile, fetchLog: log });

@@ -215,6 +215,29 @@ body {
   box-shadow: var(--shadow-accent);
 }
 
+/* Voice picker tile — selectable, with an audition button. Selected = accent wash + border. */
+.voice-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+  background: var(--surface-product);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.voice-chip:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.voice-chip[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--verified) 55%, transparent);
+  background: linear-gradient(180deg, var(--verified-soft) 0%, var(--surface-product) 70%);
+  box-shadow: var(--shadow-accent);
+}
+
 /* ── Evidence chips & labels ── */
 
 .fact-value {

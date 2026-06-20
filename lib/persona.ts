@@ -17,6 +17,7 @@ import path from 'node:path';
 import { knowledgeSearch } from './cala';
 import { normalize, slugify } from './factpack';
 import { debriefProvider } from './debrief';
+import { ELEVEN_VOICE_IDS, defaultElevenVoiceId } from './voice';
 import type { FactPack, PersonaProfile, PersonaQuote } from './types';
 
 const PERSONA_DIR = path.join(process.cwd(), 'data', 'personas');
@@ -234,12 +235,14 @@ export type DistillOpts = {
   baseTrack?: string; // round template this person runs (default 'markets')
   roundTitle?: string; // human round label for the synth prompt
   corpus?: CorpusSegment[]; // cited public words (drives style + quotes)
+  voiceId?: string; // chosen ElevenLabs pool voice; falls back to a stable per-slug default
 };
 
 /** Distill a real person into a PersonaProfile. Does NOT write — call savePersona to persist. */
 export async function distillPersona(name: string, opts: DistillOpts = {}): Promise<PersonaProfile> {
   const baseTrack = opts.baseTrack ?? 'markets';
   const corpus = opts.corpus ?? [];
+  const slug = slugify(name);
   const knowledge = await buildPersonKnowledge(name);
   const synth = await synthesize(name, opts.roundTitle ?? 'Defend the valuation', knowledge, corpus);
 
@@ -249,9 +252,14 @@ export async function distillPersona(name: string, opts: DistillOpts = {}): Prom
     ? synth.quotes.filter((q) => q.text.trim() && corpusUrls.has(q.sourceUrl))
     : [];
 
+  // Pin a voice: the chosen pool voice if valid, else a stable default keyed on the slug.
+  const voiceId =
+    opts.voiceId && ELEVEN_VOICE_IDS.has(opts.voiceId) ? opts.voiceId : defaultElevenVoiceId(slug);
+
   return {
-    slug: slugify(name),
+    slug,
     name,
+    voiceId,
     role: synth.role,
     avatar: initials(name),
     headline: synth.headline,

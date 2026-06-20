@@ -40,6 +40,40 @@ export const PERSONA_VOICE: Record<string, string> = {
   'elon-musk': 'ErXwobaYiN019PkySvjV',
 };
 
+/**
+ * Free-tier ElevenLabs premade voices — every one verified to render on a free account (unlike
+ * the Voice Library / "professional" voices, which 402 on free). This is the pool a distilled
+ * persona draws from: each gets a distinct, natural human voice for the "Hear them" preview
+ * (and the live call when ElevenLabs is enabled). The user can also pick one explicitly when
+ * distilling. Voices are the new ElevenLabs default set; ids are stable.
+ */
+export type ElevenVoice = { id: string; name: string; gender: 'male' | 'female'; blurb: string };
+export const ELEVEN_POOL: ElevenVoice[] = [
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', gender: 'male', blurb: 'Laid-back, resonant' },
+  { id: 'cjVigY5qzO86Huf0OWal', name: 'Eric', gender: 'male', blurb: 'Smooth, trustworthy' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', gender: 'male', blurb: 'Warm British storyteller' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', gender: 'male', blurb: 'Deep, resonant' },
+  { id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', gender: 'male', blurb: 'Charming, down-to-earth' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', gender: 'male', blurb: 'Steady broadcaster (British)' },
+  { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', gender: 'male', blurb: 'Wise, mature' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', gender: 'male', blurb: 'Dominant, firm' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', gender: 'female', blurb: 'Mature, reassuring' },
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', gender: 'female', blurb: 'Clear educator (British)' },
+  { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', gender: 'female', blurb: 'Knowledgeable, professional' },
+  { id: 'hpp4J3VqNfWAUOO0d1Us', name: 'Bella', gender: 'female', blurb: 'Professional, bright' },
+];
+export const ELEVEN_VOICE_IDS = new Set(ELEVEN_POOL.map((v) => v.id));
+
+/** Look up a pool voice's display name from its id (for showing which voice a persona uses). */
+export function elevenVoiceName(id?: string): string | undefined {
+  return ELEVEN_POOL.find((v) => v.id === id)?.name;
+}
+
+/** Deterministic default voice from the pool for a persona slug — stable, distinct per person. */
+export function defaultElevenVoiceId(seed: string): string {
+  return ELEVEN_POOL[hash(seed) % ELEVEN_POOL.length].id;
+}
+
 /** Stable string hash (djb2) so the same seed always maps to the same voice. */
 function hash(s: string): number {
   let h = 5381;

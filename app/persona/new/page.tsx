@@ -1,14 +1,15 @@
 "use client";
 
-// Distill a persona interactively: name a person, optionally paste YouTube / X / article links to
-// ground their voice in their own words, and we build the cited dossier. No links? The name alone
-// still works — we distill from public knowledge (Cala) and the model's read of their reputation.
+// Distill a persona interactively: name a person, pick the voice they'll speak in, and optionally
+// paste YouTube / X / article links to ground their voice in their own cited words. No links? The
+// name alone still works — we distill from public knowledge (Cala) and the model's read of them.
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GROUNDED_TRACKS } from "@/lib/tracks";
 import { VoicePreview } from "@/app/components/voice-preview";
+import { VoicePicker } from "@/app/components/voice-picker";
+import { elevenVoiceName } from "@/lib/voice";
 import type { PersonaProfile } from "@/lib/types";
 
 type FetchLog = { url: string; kind: "youtube" | "linkedin" | "article"; ok: boolean; chars: number; note: string };
@@ -24,10 +25,13 @@ function linkKind(url: string): "youtube" | "linkedin" | "article" | "" {
 
 const KIND_LABEL: Record<string, string> = { youtube: "YouTube", linkedin: "LinkedIn", article: "Article" };
 
+const inputClass =
+  "bg-surface border border-border rounded-[0.6rem] px-3.5 py-2.5 text-[0.95rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)] transition-shadow";
+
 export default function NewPersonaPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [baseTrack, setBaseTrack] = useState<string>(GROUNDED_TRACKS[0]?.id ?? "markets");
+  const [voiceId, setVoiceId] = useState("");
   const [links, setLinks] = useState<string[]>([""]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +63,7 @@ export default function NewPersonaPage() {
         body: JSON.stringify({
           name: trimmed,
           baseTrack,
+          voiceId: voiceId || undefined,
           links: links.map((l) => l.trim()).filter(Boolean),
         }),
       });
@@ -76,13 +81,14 @@ export default function NewPersonaPage() {
   if (result) {
     const p = result.profile;
     const read = result.fetchLog.filter((l) => l.ok).length;
+    const vname = elevenVoiceName(p.voiceId);
     return (
       <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
         <div className="flex items-center justify-between">
           <Link href="/persona" className="label-eyebrow hover:text-ink">← Distilled people</Link>
           <span className="label-eyebrow">distilled</span>
         </div>
-        <div className="card-product card-grounded flex flex-col gap-5 max-w-[44rem] reveal">
+        <div className="card-product card-grounded flex flex-col gap-5 w-full max-w-[46rem] reveal">
           <div className="flex items-center gap-4">
             <div className="w-[4rem] h-[4rem] shrink-0 rounded-full avatar-accent flex items-center justify-center font-display text-[1.3rem] shadow-md">
               {p.avatar}
@@ -97,6 +103,7 @@ export default function NewPersonaPage() {
           </div>
           <p className="text-muted text-[0.9rem]">{p.headline}</p>
           <div className="flex flex-wrap gap-2 text-[0.8rem]">
+            {vname && <span className="source-chip">♪ voice: {vname}</span>}
             <span className="source-chip">{p.quotes.length} cited quotes</span>
             <span className="source-chip">{p.knowledge.facts.length} cited facts</span>
             <span className="source-chip">{p.sources.length} sources</span>
@@ -133,94 +140,107 @@ export default function NewPersonaPage() {
 
   // ── Form view ──
   return (
-    <main className="container-page py-[3rem] flex flex-col gap-[1.75rem] flex-1">
+    <main className="container-page py-[3rem] flex flex-col gap-[2rem] flex-1">
       <div className="flex items-center justify-between">
         <Link href="/persona" className="label-eyebrow hover:text-ink">← Distilled people</Link>
         <span className="label-eyebrow">new persona</span>
       </div>
 
-      <header className="flex flex-col gap-2 max-w-[44rem]">
+      <header className="flex flex-col gap-3 max-w-[46rem]">
         <span className="label-eyebrow">New persona</span>
-        <h1 className="font-display text-[clamp(1.8rem,3.5vw,2.6rem)] leading-[1.1]">Distill your interviewer</h1>
-        <p className="text-muted text-[0.95rem]">
-          Name the person you&apos;ll face. Add links to how they actually talk — talks, posts,
-          articles — and we ground their voice in their own cited words. No links? Just the name
-          works; we distill from public knowledge.
+        <h1 className="font-display text-[clamp(2rem,3.8vw,2.9rem)] leading-[1.05]">Distill your interviewer</h1>
+        <p className="text-muted text-[1rem] leading-relaxed max-w-[42rem]">
+          Name the person you&apos;ll face, choose how they sound, and drop links to how they
+          actually talk. We pull cited facts, reconstruct their style, and hand you a sparring
+          partner — voice and all.
         </p>
       </header>
 
-      <div className="card-product flex flex-col gap-6 max-w-[44rem]">
-        {/* Name */}
-        <label className="flex flex-col gap-1.5">
-          <span className="label-eyebrow">Who are you facing?</span>
-          <input
-            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[1rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
-            placeholder="e.g. Taylor Wright"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={busy}
-          />
-        </label>
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_1fr] items-start">
+        {/* Left — who & what */}
+        <div className="card-product flex flex-col gap-6">
+          <label className="flex flex-col gap-1.5">
+            <span className="label-eyebrow">Who are you facing?</span>
+            <input
+              className={inputClass}
+              placeholder="e.g. Aswath Damodaran"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={busy}
+              autoFocus
+            />
+          </label>
 
-        {/* Round */}
-        <label className="flex flex-col gap-1.5">
-          <span className="label-eyebrow">What round do they run?</span>
-          <select
-            className="bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.95rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
-            value={baseTrack}
-            onChange={(e) => setBaseTrack(e.target.value)}
-            disabled={busy}
-          >
-            {GROUNDED_TRACKS.map((t) => (
-              <option key={t.id} value={t.id}>{t.title} — {t.tagline.slice(0, 60)}…</option>
-            ))}
-          </select>
-        </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="label-eyebrow">What round do they run?</span>
+            <select
+              className={inputClass}
+              value={baseTrack}
+              onChange={(e) => setBaseTrack(e.target.value)}
+              disabled={busy}
+            >
+              {GROUNDED_TRACKS.map((t) => (
+                <option key={t.id} value={t.id}>{t.title} — {t.tagline.slice(0, 56)}…</option>
+              ))}
+            </select>
+          </label>
 
-        {/* Source links */}
-        <div className="flex flex-col gap-2">
-          <span className="label-eyebrow">Their public voice <span className="text-muted normal-case">(optional — YouTube, LinkedIn, articles)</span></span>
-          {links.map((l, i) => {
-            const kind = linkKind(l);
-            return (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  className="flex-1 bg-surface border border-border rounded-[0.5rem] px-3 py-2 text-[0.9rem] focus:outline-none focus:border-verified focus:ring-2 focus:ring-[color-mix(in_srgb,var(--verified)_18%,transparent)]"
-                  placeholder="https://…"
-                  value={l}
-                  onChange={(e) => setLink(i, e.target.value)}
-                  disabled={busy}
-                />
-                {kind && <span className="source-chip shrink-0">{KIND_LABEL[kind]}</span>}
-                <button
-                  type="button"
-                  className="label-eyebrow hover:text-ink shrink-0 px-1"
-                  onClick={() => removeLink(i)}
-                  disabled={busy}
-                  aria-label="Remove link"
-                >
-                  ✕
-                </button>
-              </div>
-            );
-          })}
-          <button type="button" className="label-eyebrow hover:text-ink w-fit" onClick={addLink} disabled={busy}>
-            + Add source
-          </button>
+          <div className="flex flex-col gap-2">
+            <span className="label-eyebrow">
+              Their public voice{" "}
+              <span className="text-muted normal-case font-normal">(optional — YouTube, LinkedIn, articles)</span>
+            </span>
+            {links.map((l, i) => {
+              const kind = linkKind(l);
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    className={`flex-1 ${inputClass} text-[0.88rem] py-2`}
+                    placeholder="https://…"
+                    value={l}
+                    onChange={(e) => setLink(i, e.target.value)}
+                    disabled={busy}
+                  />
+                  {kind && <span className="source-chip shrink-0">{KIND_LABEL[kind]}</span>}
+                  <button
+                    type="button"
+                    className="text-muted hover:text-ink shrink-0 px-1.5 text-[0.9rem]"
+                    onClick={() => removeLink(i)}
+                    disabled={busy}
+                    aria-label="Remove link"
+                  >
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+            <button type="button" className="label-eyebrow hover:text-ink w-fit" onClick={addLink} disabled={busy}>
+              + Add source
+            </button>
+          </div>
         </div>
 
-        {error && <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>}
-
-        <div className="flex items-center gap-3 flex-wrap border-t border-border pt-4">
-          <button className="btn-accent disabled:opacity-60" onClick={distill} disabled={busy}>
-            {busy ? "Distilling…" : "Distill persona →"}
-          </button>
-          <span className="text-muted text-[0.8rem]">
-            {busy
-              ? "Reading sources, searching Cala for cited facts, synthesizing their voice — ~20-40s."
-              : "Reads your links, pulls cited facts, and writes a dossier + MD file."}
-          </span>
+        {/* Right — voice */}
+        <div className="card-product flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="label-eyebrow">Their voice</span>
+            <span className="text-muted text-[0.82rem]">Tap ▶ to audition. Auto picks a fitting one.</span>
+          </div>
+          <VoicePicker value={voiceId} onChange={setVoiceId} disabled={busy} />
         </div>
+      </div>
+
+      {error && <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>}
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button className="btn-accent disabled:opacity-60" onClick={distill} disabled={busy}>
+          {busy ? "Distilling…" : "Distill persona →"}
+        </button>
+        <span className="text-muted text-[0.82rem]">
+          {busy
+            ? "Reading sources, searching Cala for cited facts, synthesizing their voice — ~20-40s."
+            : "Reads your links, pulls cited facts, and writes a dossier you can spar against."}
+        </span>
       </div>
     </main>
   );

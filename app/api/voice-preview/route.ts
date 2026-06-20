@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getPersona } from '@/lib/persona';
-import { PERSONA_VOICE } from '@/lib/voice';
+import { PERSONA_VOICE, defaultElevenVoiceId } from '@/lib/voice';
 
 // Pre-rendered clip formats we'll serve, in preference order.
 const STATIC_AUDIO: [ext: string, mime: string][] = [
@@ -40,10 +40,12 @@ export async function GET(request: Request) {
   const profile = await getPersona(slug);
   if (!profile) return new Response(null, { status: 204 });
 
-  const voiceId = profile.voiceId ?? PERSONA_VOICE[slug];
+  // Every persona resolves to a real voice: its own chosen voiceId → a curated pin → a stable
+  // pool default keyed on the slug. So the preview is always a natural human voice.
+  const voiceId = profile.voiceId ?? PERSONA_VOICE[slug] ?? defaultElevenVoiceId(slug);
   const key = process.env.ELEVENLABS_API_KEY;
   const text = profile.firstMessage?.trim();
-  if (!voiceId || !key || !text) return new Response(null, { status: 204 });
+  if (!key || !text) return new Response(null, { status: 204 });
 
   const res = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
