@@ -12,6 +12,8 @@
 // Backend keys on `id` + `grounded` + `focus` + `firstMessage` + `title` (api/assistant,
 // api/debrief, vapi-assistant) — keep those stable. The rest is UI/persona metadata.
 
+import type { PersonaProfile } from './types';
+
 export type TrackId = 'stock-pitch' | 'markets' | 'behavioral' | 'technical';
 
 /** Interview arena. Only investment-banking is live for the demo; the rest sell the roadmap. */
@@ -138,3 +140,23 @@ export function getPartnersByDomain(domain: DomainId): Track[] {
 
 export const GROUNDED_TRACKS = TRACKS.filter((t) => t.grounded);
 export const UNGROUNDED_TRACKS = TRACKS.filter((t) => !t.grounded);
+
+/**
+ * Derive a Track from a distilled persona. The persona REPLACES the archetype (name, voice,
+ * objective, opening line) but inherits the base round's mechanics — crucially its `id`,
+ * `grounded`, and `knows`, so the existing api/assistant, api/debrief, and spar wiring all work
+ * unchanged (the call is still e.g. a grounded "markets" round, just run by a real named person).
+ */
+export function buildPersonaTrack(p: PersonaProfile): Track {
+  const base = getTrack(p.baseTrack) ?? GROUNDED_TRACKS[0] ?? TRACKS[0];
+  return {
+    ...base,
+    persona: p.name,
+    avatar: p.avatar,
+    personaPrompt: p.role,
+    whoLine: p.headline,
+    tagline: p.objective,
+    firstMessage: p.firstMessage,
+    focus: p.objective,
+  };
+}

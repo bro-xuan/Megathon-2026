@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test:cala": "tsx --env-file=.env scripts/test-cala.ts",
     "build:packs": "tsx --env-file=.env scripts/build-packs.ts",
+    "distill": "tsx --env-file=.env scripts/distill-persona.ts",
     "sync:vapi": "tsx --env-file=.env scripts/sync-vapi-assistants.ts"
   },
   "dependencies": {

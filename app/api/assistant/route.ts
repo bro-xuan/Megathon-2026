@@ -9,7 +9,8 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getPrepPacks } from '@/lib/factpack';
-import { buildAssistant } from '@/lib/vapi-assistant';
+import { getPersona } from '@/lib/persona';
+import { buildAssistant, buildPersonaAssistant } from '@/lib/vapi-assistant';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
 
 // Persistent Vapi assistant ids (one per track) written by `npm run sync:vapi`. When present we
@@ -28,6 +29,7 @@ async function persistedAssistantId(trackId: string): Promise<string | undefined
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const trackId = url.searchParams.get('track')?.trim();
+  const personaSlug = url.searchParams.get('persona')?.trim();
   const candidateName = url.searchParams.get('name')?.trim() || undefined;
   // ElevenLabs voice is opt-in: only used once a VALID 11labs credential is registered in Vapi
   // (set VAPI_USE_ELEVENLABS=1). Otherwise omit voice → Vapi's built-in default voice, so the
@@ -36,6 +38,18 @@ export async function GET(request: Request) {
   const voiceId = useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined;
 
   try {
+    // A distilled persona runs an existing grounded round, but the interviewer is a real person:
+    // inline assistant only (no persisted dashboard id), grounded on the same PREP_TARGETS.
+    if (personaSlug) {
+      const profile = await getPersona(personaSlug);
+      if (!profile) return Response.json({ error: 'Unknown ?persona=' }, { status: 400 });
+      const base = getTrack(profile.baseTrack);
+      const packs = base?.grounded ? await getPrepPacks(PREP_TARGETS) : [];
+      const assistant = buildPersonaAssistant(profile, packs, { candidateName, voiceId });
+      const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
+      return Response.json({ assistant, assistantId: undefined, factCount });
+    }
+
     const track = trackId ? getTrack(trackId) : undefined;
     if (!track) return Response.json({ error: 'Missing or unknown ?track=' }, { status: 400 });
     const packs = track.grounded ? await getPrepPacks(PREP_TARGETS) : [];

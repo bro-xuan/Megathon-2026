@@ -1,19 +1,34 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, use, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Vapi from "@vapi-ai/web";
-import { getTrack } from "@/lib/tracks";
-import type { TranscriptTurn } from "@/lib/types";
+import { buildPersonaTrack, getTrack } from "@/lib/tracks";
+import type { PersonaProfile, TranscriptTurn } from "@/lib/types";
 
 type Phase = "idle" | "connecting" | "live" | "debriefing" | "error";
 
-export default function SparPage({ params }: { params: Promise<{ track: string }> }) {
+export default function SparRoute({ params }: { params: Promise<{ track: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <SparPage params={params} />
+    </Suspense>
+  );
+}
+
+function SparPage({ params }: { params: Promise<{ track: string }> }) {
   const { track: trackId } = use(params);
-  const track = getTrack(trackId);
+  const searchParams = useSearchParams();
+  const personaSlug = searchParams.get("persona") || undefined;
   const router = useRouter();
+
+  // A distilled persona REPLACES the archetype but runs the base round (trackId). Load it
+  // cache-only; until it arrives, fall back to the base track so the layout still renders.
+  const [persona, setPersona] = useState<PersonaProfile | null>(null);
+  const baseTrack = getTrack(trackId);
+  const track = persona ? buildPersonaTrack(persona) : baseTrack;
 
   const vapiRef = useRef<Vapi | null>(null);
   // Safety net: if we enter "connecting" and never reach "live" (no mic, network, Vapi
@@ -33,13 +48,27 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
   }
 
   useEffect(() => {
+    if (!personaSlug) return;
+    let live = true;
+    fetch(`/api/persona?slug=${encodeURIComponent(personaSlug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (live && d?.profile) setPersona(d.profile as PersonaProfile);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [personaSlug]);
+
+  useEffect(() => {
     return () => {
       clearConnectTimer();
       vapiRef.current?.stop();
     };
   }, []);
 
-  if (!track) notFound();
+  if (!baseTrack) notFound();
 
   async function join() {
     const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
@@ -66,7 +95,11 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
     }
 
     try {
-      const res = await fetch(`/api/assistant?track=${encodeURIComponent(track!.id)}`);
+      // Persona drives an inline assistant (?persona=); plain rounds use ?track=.
+      const assistantUrl = personaSlug
+        ? `/api/assistant?persona=${encodeURIComponent(personaSlug)}`
+        : `/api/assistant?track=${encodeURIComponent(track!.id)}`;
+      const res = await fetch(assistantUrl);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load assistant");
 
@@ -162,7 +195,9 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
     return (
       <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
         <div className="flex items-center justify-between">
-          <Link href="/start" className="label-eyebrow hover:text-ink">← Choose partner</Link>
+          <Link href={persona ? "/persona" : "/start"} className="label-eyebrow hover:text-ink">
+            ← {persona ? "Distilled people" : "Choose partner"}
+          </Link>
           <span className="label-eyebrow">briefing</span>
         </div>
         <div className="card-product flex flex-col gap-6 max-w-[44rem]">
@@ -173,20 +208,51 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-display text-[1.6rem]">{track!.persona}</h1>
-                {grounded ? (
+                {persona ? (
+                  <span className="source-chip">◆ distilled · {persona.sources.length} sources</span>
+                ) : grounded ? (
                   <span className="source-chip">★ cited</span>
                 ) : (
                   <span className="label-eyebrow">delivery</span>
                 )}
               </div>
+              {persona && <p className="text-[0.8rem] text-ink/70">{persona.role}</p>}
               <p className="text-muted text-[0.9rem]">{track!.whoLine}</p>
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="label-eyebrow">The objective</span>
+            <span className="label-eyebrow">{persona ? "What they're evaluating" : "The objective"}</span>
             <p className="text-[0.95rem]">{track!.tagline}</p>
           </div>
+
+          {persona && (
+            <div className="flex flex-col gap-3 border border-border rounded-[0.6rem] p-4 bg-surface/40">
+              <div className="flex items-center justify-between gap-2">
+                <span className="label-eyebrow">How they interview</span>
+                <Link href={`/persona/${encodeURIComponent(persona.slug)}`} className="label-eyebrow hover:text-ink">
+                  Full dossier →
+                </Link>
+              </div>
+              {persona.style.petTopics.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {persona.style.petTopics.slice(0, 5).map((t) => (
+                    <span key={t} className="source-chip">{t}</span>
+                  ))}
+                </div>
+              )}
+              {persona.quotes[0] && (
+                <a
+                  href={persona.quotes[0].sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[0.85rem] italic text-muted hover:text-ink border-l-2 border-border pl-3"
+                >
+                  “{persona.quotes[0].text}”
+                </a>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <span className="label-eyebrow">What they know</span>
