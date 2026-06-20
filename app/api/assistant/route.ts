@@ -13,9 +13,13 @@ export async function GET(request: Request) {
   if (!target) return Response.json({ error: 'Missing ?target=' }, { status: 400 });
   try {
     const pack = await getFactPack(target);
+    // ElevenLabs voice is opt-in: only used once a VALID 11labs credential is registered in
+    // Vapi (set VAPI_USE_ELEVENLABS=1). Otherwise omit voice → Vapi's built-in default voice,
+    // so the call still works on Groq alone.
+    const useEleven = process.env.VAPI_USE_ELEVENLABS === '1';
     const assistant = buildAssistant(pack, {
       candidateName,
-      voiceId: process.env.ELEVENLABS_VOICE_ID,
+      voiceId: useEleven ? process.env.ELEVENLABS_VOICE_ID : undefined,
     });
     return Response.json({ assistant, factCount: pack.facts.length });
   } catch (err) {

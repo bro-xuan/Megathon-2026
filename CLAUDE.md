@@ -52,6 +52,21 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
 ## Decision log & API quirks (append newest at top)
 
+**Vapi keys live + Groq BYO configured (2026-06-20):** `VAPI_PRIVATE_KEY` +
+`NEXT_PUBLIC_VAPI_PUBLIC_KEY` in `.env`. REST auth verified (`GET /call` → 200; 0 prior calls,
+so the transcript shape is confirmed on the first real call). Registered the **Groq** provider
+credential via `POST https://api.vapi.ai/credential {provider:"groq",apiKey}` → 201. **ElevenLabs
+failed: 401** (the `ELEVENLABS_API_KEY` in `.env` is invalid/expired — Vapi validates against
+11labs on create). Until a valid key is supplied, voice falls back to **Vapi's built-in default
+voice** (`/api/assistant` omits the 11labs voice unless `VAPI_USE_ELEVENLABS=1`). `/api/assistant`
+verified: returns Groq `llama-3.3-70b-versatile` + Deepgram + injected fact pack (8.7k-char
+grounded prompt incl. the $159B catch). The actual WebRTC voice call still needs a browser+mic.
+
+**Debrief reasoner = GLM-5.2 (2026-06-20):** `.env` has `GLM_API_KEY` (Z.ai), not Anthropic.
+`lib/debrief.ts` dispatches: Claude (`claude-opus-4-8`) if `ANTHROPIC_API_KEY` set, else GLM-5.2
+via Z.ai (`thinking:{type:"disabled"}` so content is populated). Verified end-to-end on a
+synthetic Stripe transcript: $65B bluff → flagged as $159B with the Yahoo source, 3/5 verified.
+
 **Cala API VERIFIED (2026-06-20)** — corrects the stale "verify if stale" block below; see
 `scripts/test-cala.ts` + `data/cala-raw/*.json`. Base `https://api.cala.ai`, header `X-API-KEY`.
 - **`knowledge_search` is the PRIMARY (and sufficient) source.** `POST /v1/knowledge/search`
