@@ -16,14 +16,25 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
   const router = useRouter();
 
   const vapiRef = useRef<Vapi | null>(null);
+  // Safety net: if we enter "connecting" and never reach "live" (no mic, network, Vapi
+  // hiccup), this timer flips us to the error state instead of spinning forever.
+  const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState<string>("");
 
+  function clearConnectTimer() {
+    if (connectTimerRef.current) {
+      clearTimeout(connectTimerRef.current);
+      connectTimerRef.current = null;
+    }
+  }
+
   useEffect(() => {
     return () => {
+      clearConnectTimer();
       vapiRef.current?.stop();
     };
   }, []);
@@ -38,6 +49,22 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
       return;
     }
     setPhase("connecting");
+    setError("");
+
+    // Mic pre-check. A live voice call needs the microphone; if it's blocked or absent, Vapi
+    // emits only device *warnings* and hangs on "connecting". Check up front so the candidate
+    // gets a clear, actionable message instead of an indefinite spinner.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop()); // release immediately; Vapi acquires its own
+    } catch {
+      setError(
+        "Greenroom needs your microphone. Allow mic access in your browser — and on macOS, System Settings → Privacy → Microphone — then start the call again.",
+      );
+      setPhase("error");
+      return;
+    }
+
     try {
       const res = await fetch(`/api/assistant?track=${encodeURIComponent(track!.id)}`);
       const data = await res.json();
@@ -45,11 +72,15 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
 
       const vapi = new Vapi(publicKey);
       vapiRef.current = vapi;
-      vapi.on("call-start", () => setPhase("live"));
+      vapi.on("call-start", () => {
+        clearConnectTimer();
+        setPhase("live");
+      });
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
       vapi.on("error", (e: unknown) => {
         // Vapi emits a structured object, not an Error — dig out the real message.
+        clearConnectTimer();
         console.error("[vapi error]", e);
         const err = e as { error?: { message?: string }; errorMsg?: string; message?: string; msg?: string };
         const detail =
@@ -69,10 +100,23 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
           ]);
         }
       });
+      // Arm the safety net before starting: if "call-start" never fires within 15s, bail to the
+      // error state (with the sample-debrief fallback) instead of spinning on "connecting".
+      clearConnectTimer();
+      connectTimerRef.current = setTimeout(() => {
+        connectTimerRef.current = null;
+        vapiRef.current?.stop();
+        setError(
+          "The call didn't connect — usually a microphone or network issue. Try again, or see a sample debrief below.",
+        );
+        setPhase("error");
+      }, 15000);
+
       // Prefer the persistent dashboard assistant (npm run sync:vapi); fall back to the inline
       // config so the call still works before any sync / as venue insurance.
       await vapi.start(data.assistantId ?? data.assistant);
     } catch (e) {
+      clearConnectTimer();
       setError(e instanceof Error ? e.message : "Failed to start call");
       setPhase("error");
     }
@@ -87,6 +131,7 @@ export default function SparPage({ params }: { params: Promise<{ track: string }
   }
 
   async function endInterview() {
+    clearConnectTimer();
     vapiRef.current?.stop();
     setPhase("debriefing");
     try {
