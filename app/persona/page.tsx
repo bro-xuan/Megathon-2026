@@ -21,6 +21,7 @@ export default async function PersonaIndex() {
           traces: their cited knowledge, their objective, and how they actually talk. Then you
           spar with <em>them</em>.
         </p>
+        <Link href="/persona/new" className="btn-primary w-fit mt-1">+ Distill someone new</Link>
       </header>
 
       {personas.length > 0 ? (
@@ -57,17 +58,15 @@ export default async function PersonaIndex() {
           })}
         </section>
       ) : (
-        <section className="card-product max-w-[40rem] flex flex-col gap-2">
+        <section className="card-product max-w-[40rem] flex flex-col gap-3">
           <span className="label-eyebrow">No personas yet</span>
           <p className="text-muted text-[0.9rem]">
-            Distill one from the command line:
+            Distill your first interviewer — name them and (optionally) paste links to how they
+            talk.
           </p>
-          <pre className="text-[0.82rem] bg-surface border border-border rounded-[0.5rem] p-3 overflow-auto">
-            npm run distill -- &quot;Aswath Damodaran&quot; markets
-          </pre>
-          <p className="text-muted text-[0.85rem]">
-            Drop a cited corpus at <code>data/personas/raw/&lt;slug&gt;.json</code> first to ground
-            their voice in verbatim quotes.
+          <Link href="/persona/new" className="btn-primary w-fit">+ Distill someone new</Link>
+          <p className="text-muted text-[0.8rem]">
+            Prefer the terminal? <code>npm run distill -- &quot;Aswath Damodaran&quot; markets</code>
           </p>
         </section>
       )}
