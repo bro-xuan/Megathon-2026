@@ -24,16 +24,31 @@ Prove both external APIs work *before* building any UI.
 - [ ] `.env.local` with all keys; confirm `.env.example` documents them.
 - [ ] `lib/cala.ts` minimal client (X-API-KEY).
 - [ ] `scripts/test-cala.ts` — `entity_search` + `knowledge_search` on a demo company.
+- [ ] **Inspect the *raw* Cala JSON before writing any normalizer** — dump the real
+      `origins[].source` citation shape so `lib/factpack.ts` types match reality (first 30 min;
+      skipping this = a 2h type-rewrite later).
 - [ ] `scripts/test-vapi.ts` (or a throwaway page) — boot a trivial Vapi web call.
+- [ ] **Test `GET /call/{id}` transcript shape now** — confirm you can split candidate vs.
+      interviewer turns cleanly before M3 hands it to Claude (the format is messy).
 - **DoD:** both scripts print real output (cited facts from Cala; a working voice hello from
-  Vapi). If either fails, fix before anything else.
+  Vapi) **and** you've seen the real Cala citation JSON + the real Vapi transcript shape. If
+  either fails, fix before anything else.
 
-## M1 — Fact pack + Study cards (~2.5h)
+## M1 — Fact pack + Study showcase (~2.5h)
+Study is the **optional Cala showcase** off Landing (judge-facing proof the data is real), not
+a step the candidate must read before interviewing.
 - [ ] `lib/factpack.ts` — normalize Cala output → `FactPack`; JSON cache read/write.
 - [ ] `app/api/factpack/route.ts` — `GET ?target=` builds + caches the pack.
 - [ ] Pick **1–2 demo companies** with rich Cala coverage; pre-build + commit their packs.
+- [ ] **Find + verify the "stale-LLM catch"** — for the chosen company, lock at least one
+      *recent, sourced* fact a generic LLM gets **wrong** (CEO change / buyout / new lead
+      investor from the last weeks-to-months, not 6mo+ or GPT already knows it). Confirm the
+      source URL resolves. **This is a deliverable, not a nice-to-have** — no catch, no Cala story.
+- [ ] Ensure the pack carries **relationship facts** (owners/funders/board/comps), so the
+      network can be interrogated and rendered as a cited list even if M4's graph is cut.
 - [ ] `app/study/[target]/page.tsx` — `FactCard`s with `SourceChip`s.
-- **DoD:** `/study/<target>` shows grouped cited facts; every source chip links out.
+- **DoD:** `/study/<target>` shows grouped cited facts; every source chip links out; the
+  scripted stale-LLM catch is written down and its source verified to resolve.
 
 ## M2 — Spar voice loop (~3h)
 - [ ] `lib/vapi-assistant.ts` — interviewer persona + inject fact pack into system prompt.
@@ -46,11 +61,14 @@ Prove both external APIs work *before* building any UI.
 ## M3 — Fact-check + Debrief (~3h) ⭐ differentiator — protect
 - [ ] `app/api/call/[id]/route.ts` — proxy Vapi `GET /call/{id}` (timestamped transcript).
 - [ ] `lib/anthropic.ts` + `app/api/debrief/route.ts` — Claude compares transcript vs fact
-      pack → `FactCheckFlag[]` + scores.
+      pack → **`DebriefResult`**: reconstruct *every* factual claim → `ClaimCheck[]`
+      (`verified` | `flagged` | `unverifiable`, each with a source link) + `FactCheckFlag[]` +
+      `verifiedCount`/`totalClaims` + score. **Citation density is the wow — not just the 1–2 bluffs.**
 - [ ] `app/debrief/[callId]/page.tsx` — transcript with `FlagChip`s (quote · issue ·
-      correctValue · source) + `ScorePanel`.
-- **DoD:** bluff a known fact in Spar → it appears flagged with a **working source link** in
-  Debrief.
+      correctValue · source) + a **scorecard** ("N of M claims verified, every one linked") +
+      `ScorePanel`.
+- **DoD:** bluff a known fact in Spar → it appears flagged with a **working source link**;
+  the scorecard shows the full verified-claims tally with a resolving link per claim.
 
 ## M4 — Knowledge graph (~2h) ✂️ CUT LINE
 - [ ] `GraphView` with `react-force-graph-2d` from `FactPack.relationships`.
@@ -64,11 +82,17 @@ Prove both external APIs work *before* building any UI.
 - [ ] **"Video call" skin for Spar** — static interviewer image + call chrome
       (`InterviewerStage` + `CallBar`). Cosmetic only; audio stays the browser web call.
       No Twilio, no real video.
-- [ ] **Fake scheduling flow** — Cal-style booking screen (`BookingPicker` +
-      `ConfirmationCard`) that "books" a slot then **starts the call immediately** via
-      "Join now". No real time-triggered backend.
-- [ ] **Mock/fallback mode** — canned fact pack + recorded call + precomputed Debrief
-      (network-off safe) so a venue/network failure can't kill the demo.
+- [ ] **Fake scheduling flow (on the critical path)** — Cal-style booking screen
+      (`BookingPicker` + `ConfirmationCard`) that "books" a slot then **starts the call
+      immediately** via "Join now". No real time-triggered backend. *Timebox ~1–2h; it's
+      cosmetic — don't let it eat M2/M3.*
+- [ ] **Visible Cala moment** — a "Querying Cala.ai for [Company]'s entity network…" loading
+      beat on "Join now" / Spar entry, so judges *see* Cala working (else it looks like a
+      scraped JSON file). Cheap, high legibility for the sponsor prize.
+- [ ] **Mock/fallback mode** — canned fact pack + recorded call + **a hardcoded, perfect
+      precomputed `DebriefResult`** mapped to the recorded transcript, triggerable manually.
+      If the live API hesitates for even a second during the demo, render the perfect Debrief
+      instantly. Network-off safe.
 - [ ] Deploy to Vercel; set env vars in the dashboard.
 - [ ] Script the bluffs in advance and rehearse the demo end to end.
 - **DoD:** full flow runs on the Vercel URL **and** the recorded fallback works offline.

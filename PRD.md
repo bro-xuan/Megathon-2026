@@ -1,7 +1,7 @@
 # Greenroom — Product Requirements Document
 
-> A voice-native partner for high-stakes finance, grounded in real, cited data — it catches
-> your bluffs when you practice, and briefs you with dense market intelligence when you're live.
+> A voice-native **mock interviewer** for high-stakes finance, grounded in real, cited data —
+> it catches your bluffs when you practice.
 
 **Event:** Megathon 2026 · **Build window:** ~1.5 days · **Sponsors targeted:** Cala.ai
 (data moat) + Vapi (voice). This is the single source of truth — vision *and* buildable spec.
@@ -35,6 +35,25 @@ catching you when you're wrong:
 - *"You said they're founder-led — their CEO isn't a founder. Are you sure?"*
 - *"You pitched them as mid-market, but they're 5,000 employees. Walk me through that."*
 
+**Where Cala becomes load-bearing (not garnish).** A plain LLM nails the technical drills, so
+we deliberately steer the interview toward the three things only Cala can do, and make them the
+*climax*:
+
+1. **The "stale-LLM catch."** We script at least one fact that *sounds right and a generic LLM
+   would agree with*, but Cala — with a recent, dated source — proves is outdated/false (a
+   recent acquisition, a CEO change, a new lead investor). The candidate says the "obvious"
+   thing; Greenroom catches it with a source link. **This one beat *is* the Cala prize**: it
+   visibly beats what GPT-alone would have said. *(Curated demo requirement, see §11.)*
+2. **Interrogate the network, not just the company.** The interviewer probes the *web of
+   relationships* — comps, likely acquirers, funders, board — which is exactly Cala's
+   entity-relationship data and the thing an LLM cannot reproduce reliably. Note the split:
+   the **relationship _data_ is load-bearing** (it lives in the fact pack and renders fine as a
+   cited list), while the **force-graph _visualization_ (M4) stays the cut line** — pretty, not
+   essential.
+3. **(Flourish) Ground the interviewer too.** Where time allows, the interviewer persona is a
+   *real* bank instantiated from Cala (e.g. "an MD at [real bank] that just closed [real
+   deal]"), so Cala powers both sides of the table.
+
 ## 3. Product critique & rationale (why this wins, and what could kill it)
 
 **Agree with the core thesis.** The wedge is sharp and the differentiation is *structural*,
@@ -61,20 +80,42 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 
 ## 5. Scope
 
+### Main flow (the critical path — this is the demo)
+```
+Landing ──► Schedule ──► Spar ──► Debrief
+(pick IB +   (fake Cal     (voice       (bluffs flagged
+ company)     booking →     interview,    + sourced + score)
+              "Join now")   video-call
+                            skin)
+```
+
 ### In scope (the build)
-- **Study mode** — explore a target firm as a cited fact pack + knowledge graph.
-- **Spar mode** — live Vapi voice mock interview grounded in the fact pack.
+- **Spar mode** — live Vapi voice mock interview grounded in the pre-fetched fact pack.
+  On the critical path.
 - **Fact-check + Debrief** — post-call transcript with bluffs flagged and **sourced**, plus
-  a simple score. *This is the differentiator — protect it.*
+  a simple score. *This is the differentiator — protect it.* On the critical path.
+- **Schedule** — a **faked Cal-style scheduling** screen (book a slot → "Join now" starts the
+  call immediately) that frames Spar as a real interview ritual. On the critical path.
+- **Study mode** — **optional, off the critical path.** A judge-facing **Cala showcase**: a few
+  credible cited fact cards with source links front-and-center, reachable from Landing
+  ("see what we know about this company"). The candidate does **not** need to read it to
+  interview — its job is to make the Cala data *visible and provably real*. Knowledge graph
+  (M4) is pure upside layered on top.
+- **Visible Cala moment** — because the pack is pre-fetched into JSON, Cala is otherwise
+  *invisible* and judges may assume we scraped the web. Surface a deliberate, visible
+  **"Querying Cala.ai for [Company]'s entity network…"** beat (on Schedule "Join" / Spar entry)
+  so the sponsor's work is legible on screen, not just in a backend file.
 - **Presentation layer (M5 polish)** — Spar styled as a **"video call"** (static interviewer
-  image + call chrome; audio-only browser call underneath) and a **faked Cal-style scheduling**
-  screen (book a slot → "Join now" starts the call immediately).
+  image + call chrome; audio-only browser call underneath).
 
 ### Optional / stretch (only after the core works)
 - **Mollie test-mode paywall** (M6, the last step) — a Business/Distribution-score booster;
   the Mollie account already qualifies us for the Startup track regardless. See `TASKS.md`.
 
 ### Out of scope (pitch as "platform", don't build)
+- **Live co-pilot / "brief you while you're live."** Greenroom is a *mock* interviewer only.
+  There is **no real-time Cala lookup during a call** — that contradicts the core architecture
+  (grounding before, scoring after) and is a different product with no shared code.
 - Multiple verticals (sales, negotiation) beyond the IB interview.
 - Arbitrary user-entered targets on stage (curated demo companies only).
 - **Real video streams, phone calls / Twilio, and any real time-triggered scheduling backend.**
@@ -84,18 +125,18 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 
 ## 6. User stories
 
-1. As a candidate, I pick "IB interview" and a target company, and see a cited fact pack so
-   I know what I'm walking into. *(Study)*
-2. As a candidate, I start a voice call and the interviewer asks me to pitch the company and
+1. As a candidate, I pick "IB interview" and a target company, then "book" my interview on a
+   Cal-style scheduling screen and join a video-call-style session — realistic framing, even
+   though the call starts on demand. *(Landing → Schedule → Spar; scheduling is faked)*
+2. As a candidate, I start the voice call and the interviewer asks me to pitch the company and
    challenges my claims out loud. *(Spar)*
 3. When I state something false ("they're founder-led"), the interviewer pushes back, and
    after the call I see that exact quote flagged with the correct fact **and a source URL**.
-   *(Fact-check / Debrief)*
-4. As a candidate, I explore the company's relationships (owners, funders, board) as a graph
-   where each edge links to its source. *(Study — graph, cut-able)*
-5. As a candidate, I "book" my interview on a Cal-style scheduling screen and join a
-   video-call-style session — realistic framing, even though the call starts on demand.
-   *(Schedule → Spar; scheduling is faked, no real time-trigger)*
+   *(Fact-check / Debrief — the differentiator)*
+4. As a judge/curious user, I open the optional Study screen and see the company's cited facts
+   — proving the data Greenroom grounds on is real and sourced. *(Study — Cala showcase)*
+5. As a candidate, I explore the company's relationships (owners, funders, board) as a graph
+   where each edge links to its source. *(Study — graph, pure upside / cut-able)*
 
 ## 7. Success criteria
 
@@ -145,12 +186,19 @@ reliable post-call Claude pass.
 1. **Pre-call:** `/api/factpack` queries Cala → normalized cited fact pack → cached JSON →
    injected into the Vapi interviewer's system prompt as ground truth.
 2. **Live (Spar):** Vapi assistant (Groq `llama-3.3-70b-versatile`, ~0.2s TTFB) challenges
-   claims against the **injected facts only** — it must not freelance corrections from its own
-   memory (it demonstrably hallucinates them); live correction is out of scope, fact-checking
-   is the debrief's job. Transcript captured via Web SDK `message` events.
+   claims **against the injected facts only**. The boundary is precise: the agent **may push
+   back live when a claim contradicts an injected fact** (that's grounded — the correct value
+   is right there in the pack, so the scripted bluff *must* be a fact the pack contains); what
+   it must **never** do is correct you from its own memory (it demonstrably hallucinates those)
+   or attempt comprehensive fact-checking — that exhaustive, structured pass is the debrief's
+   job. The persona is steered to **probe the relationship network** (comps, acquirers, funders,
+   board) — the part of the pack only Cala can supply — not just generic technical drills.
+   Transcript captured via Web SDK `message` events.
 3. **Post-call (Debrief):** `/api/call/[id]` pulls the timestamped transcript;
-   `/api/debrief` runs Claude to compare statements vs fact pack → structured, sourced
-   flags + score.
+   `/api/debrief` runs Claude to compare statements vs fact pack → a **citation-dense
+   scorecard**: it reconstructs *every* factual claim the candidate made and reports
+   "*N of M claims verified against source*" with a working link per claim, plus the flagged
+   bluffs. The wall of working citations is the Cala wow — density, not just presence.
 
 **Route / file map:**
 ```
@@ -179,6 +227,11 @@ type FactPack = { target: string; entityId: string; summary: string;
                   facts: Fact[]; relationships: Relationship[]; fetchedAt: string };
 type FactCheckFlag = { quote: string; issue: string; correctValue: string;
                        sourceUrl: string; severity: "low" | "medium" | "high" };
+// Citation-dense scorecard: every claim the candidate made, checked against the pack.
+type ClaimCheck = { quote: string; verdict: "verified" | "flagged" | "unverifiable";
+                    sourceUrl?: string; correctValue?: string };
+type DebriefResult = { claims: ClaimCheck[]; flags: FactCheckFlag[];
+                       verifiedCount: number; totalClaims: number; score: number };
 ```
 
 **Fact-pack pipeline (pre-call):** target name → Cala `entity_search` (→ UUID) →
@@ -203,3 +256,14 @@ scheduling) → M6 optional Mollie paywall (the last step). Each milestone is de
 Arc: "Here's the company (cited facts) → now interview me → watch me bluff → it catches me,
 with the source." Curate 1–2 demo companies and script the bluffs in advance; keep a
 mock/recorded fallback so a venue/network/voice failure can't kill the pitch.
+
+**The one beat that must land — the "stale-LLM catch."** Curate the demo company so that at
+least one scripted bluff is something *a generic LLM would confidently agree with* but Cala
+proves wrong with a recent, dated source (a recent acquisition, CEO change, new lead investor).
+Rehearse it: candidate states the "obvious" fact → interviewer pushes back → Debrief shows the
+exact quote flagged with a working source link. This is the moment that proves Cala beats
+GPT-alone — without it, the Cala prize is just "company facts." Pick the company *for* this beat,
+then verify the source URL resolves before the demo.
+
+**Close on citation density.** End the demo on the Debrief scorecard — "N of M claims verified,
+every one linked" — so the last thing judges see is a wall of working Cala citations.
