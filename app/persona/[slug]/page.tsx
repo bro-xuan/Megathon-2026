@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPersona } from "@/lib/persona";
 import { getTrack } from "@/lib/tracks";
+import { VoicePreview } from "@/app/components/voice-preview";
 
 export default async function PersonaDossier({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -63,7 +64,10 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
             <p className="text-[0.92rem]">{p.objective}</p>
           </div>
           <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-            <span className="label-eyebrow">Opening line</span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="label-eyebrow">Opening line</span>
+              <VoicePreview text={p.firstMessage} name={p.name} seed={p.slug} />
+            </div>
             <p className="text-[0.92rem] italic">“{p.firstMessage}”</p>
           </div>
         </div>

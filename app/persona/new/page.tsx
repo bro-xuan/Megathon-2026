@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GROUNDED_TRACKS } from "@/lib/tracks";
+import { VoicePreview } from "@/app/components/voice-preview";
 import type { PersonaProfile } from "@/lib/types";
 
 type FetchLog = { url: string; kind: "youtube" | "linkedin" | "article"; ok: boolean; chars: number; note: string };
@@ -89,6 +90,9 @@ export default function NewPersonaPage() {
             <div className="flex flex-col gap-0.5">
               <h1 className="font-display text-[1.5rem]">{p.name}</h1>
               <p className="text-[0.82rem] text-ink/70">{p.role}</p>
+            </div>
+            <div className="ml-auto self-center">
+              <VoicePreview text={p.firstMessage} name={p.name} seed={p.slug} />
             </div>
           </div>
           <p className="text-muted text-[0.9rem]">{p.headline}</p>
