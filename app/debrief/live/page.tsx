@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ClaimRow,
@@ -9,6 +9,8 @@ import {
   ScorePanel,
   TranscriptView,
 } from "@/app/components/debrief";
+import { CoverageGraph } from "@/app/components/coverage-graph";
+import { buildCoverageGraph } from "@/lib/coverage-graph";
 import type { AnyDebrief, DebriefResult, TranscriptTurn } from "@/lib/types";
 
 type Stashed = {
@@ -86,8 +88,14 @@ export default function LiveDebriefPage() {
 }
 
 function CitedDebrief({ debrief }: { debrief: DebriefResult }) {
+  const graph = useMemo(
+    () => (debrief.packs?.length ? buildCoverageGraph(debrief.packs, debrief) : null),
+    [debrief],
+  );
   return (
     <>
+      {graph && <CoverageGraph graph={graph} />}
+
       <ScorePanel debrief={debrief} />
 
       {debrief.flags.length > 0 && (

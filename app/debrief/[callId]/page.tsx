@@ -4,7 +4,10 @@ import path from "node:path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClaimRow, FlagCard, ScorePanel, TranscriptView } from "@/app/components/debrief";
-import type { DebriefResult, TranscriptTurn } from "@/lib/types";
+import { CoverageGraph } from "@/app/components/coverage-graph";
+import { buildCoverageGraph } from "@/lib/coverage-graph";
+import { getFactPack } from "@/lib/factpack";
+import type { CoverageGraph as CoverageGraphT, DebriefResult, TranscriptTurn } from "@/lib/types";
 
 type Fixture = { target: string; transcript: TranscriptTurn[]; debrief: DebriefResult };
 
@@ -29,6 +32,15 @@ export default async function DebriefPage({
 
   const { target, transcript, debrief } = fixture;
 
+  // Build the coverage graph from the target's cached cited pack (offline, no Cala call).
+  let graph: CoverageGraphT | null = null;
+  try {
+    const pack = await getFactPack(target);
+    graph = buildCoverageGraph([pack], debrief);
+  } catch {
+    graph = null; // pack unavailable → skip the hero, the scorecard still renders
+  }
+
   return (
     <main className="flex-1">
       <div className="container-page py-[4rem] flex flex-col gap-[2.5rem]">
@@ -45,6 +57,8 @@ export default async function DebriefPage({
             sourced. Every factual claim you made was checked against Cala&apos;s cited data.
           </p>
         </header>
+
+        {graph && <CoverageGraph graph={graph} />}
 
         <ScorePanel debrief={debrief} />
 

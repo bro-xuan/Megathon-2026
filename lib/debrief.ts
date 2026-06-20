@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import type { DebriefResult, FactPack, GeneralDebrief, TranscriptTurn } from './types';
+import { entityEntries, factEntries, nodeIdForCompany } from './coverage-graph';
 
 // ---- Shared validation schema ----
 const ClaimCheckZ = z.object({
@@ -16,6 +17,7 @@ const ClaimCheckZ = z.object({
   verdict: z.enum(['verified', 'flagged', 'unverifiable']),
   sourceUrl: z.string().default(''),
   correctValue: z.string().default(''),
+  nodeId: z.string().default(''),
 });
 const FlagZ = z.object({
   quote: z.string(),
@@ -23,6 +25,8 @@ const FlagZ = z.object({
   correctValue: z.string(),
   sourceUrl: z.string().default(''),
   severity: z.enum(['low', 'medium', 'high']),
+  recovery: z.enum(['recovered', 'doubled-down', 'not-challenged']).default('not-challenged'),
+  nodeId: z.string().default(''),
 });
 const DebriefZ = z.object({
   claims: z.array(ClaimCheckZ),
@@ -30,6 +34,7 @@ const DebriefZ = z.object({
   verifiedCount: z.number().default(0),
   totalClaims: z.number().default(0),
   score: z.number(),
+  composureNote: z.string().default(''),
 });
 
 const SYSTEM = `You are a rigorous investment-banking interview fact-checker. After a mock interview, you receive (1) the interview transcript and (2) a CITED FACT PACK about the target company — the ONLY ground truth you may use.
@@ -43,10 +48,13 @@ Rules:
 - For flagged claims, set correctValue to the pack's correct value; otherwise correctValue = "".
 - NEVER use your own memory of the company — only the fact pack. If the pack lacks a fact, it is "unverifiable", not "verified".
 - Also output "flags": one entry per flagged claim (the bluffs), with a short "issue", the correctValue, the sourceUrl, and a severity (high = a confident, central, provably-wrong claim like valuation/ownership/IPO; medium = a softer error; low = minor).
-- verifiedCount = number of "verified" claims; totalClaims = claims.length; score = 0-100 accuracy (start at 100, subtract heavily for high-severity flags, lightly for medium/low; unverifiable claims are neutral).`;
+- recovery (on each flag): what the candidate did once this wrong claim was on the table — the most important behavioural signal. Look at the interviewer turns AFTER the claim. "recovered" = the interviewer pushed back / questioned this specific claim AND the candidate then corrected it, retracted it, hedged, or acknowledged the error. "doubled-down" = the interviewer pushed back AND the candidate repeated, defended, or insisted on the wrong claim anyway. "not-challenged" = the interviewer never tested this specific claim, so it slipped by unexamined. Judge ONLY from the transcript; do not assume a challenge that is not there.
+- nodeId: the single best-matching graph-node id for the claim, copied VERBATIM from the [brackets] in the fact pack — the fact topic the claim is about, or a related entity the candidate named (e.g. an investor, board member, acquisition, competitor). If the claim is about the company itself, use that company's id. If nothing in the pack matches, set nodeId to "". Set the same nodeId on the matching "flags" entry.
+- verifiedCount = number of "verified" claims; totalClaims = claims.length; score = 0-100 accuracy (start at 100, subtract heavily for high-severity flags, lightly for medium/low; unverifiable claims are neutral).
+- composureNote: one or two plain sentences on how the candidate handled BEING CAUGHT OUT — the reveal that matters more than the error itself. Reward recoveries (owning a mistake when pushed) and call out double-downs (insisting on a wrong figure under pressure), which read worse than the original slip. Note any high-severity bluff that went unchallenged as something a real interviewer would have caught. If no bluffs were challenged at all, say the candidate's recovery was never tested this round. Reference what actually happened in the transcript; never invent a challenge.`;
 
 const SHAPE = `Respond with ONLY a single JSON object, no markdown fences, matching exactly:
-{"claims":[{"quote":string,"verdict":"verified"|"flagged"|"unverifiable","sourceUrl":string,"correctValue":string}],"flags":[{"quote":string,"issue":string,"correctValue":string,"sourceUrl":string,"severity":"low"|"medium"|"high"}],"verifiedCount":number,"totalClaims":number,"score":number}`;
+{"claims":[{"quote":string,"verdict":"verified"|"flagged"|"unverifiable","sourceUrl":string,"correctValue":string,"nodeId":string}],"flags":[{"quote":string,"issue":string,"correctValue":string,"sourceUrl":string,"severity":"low"|"medium"|"high","recovery":"recovered"|"doubled-down"|"not-challenged","nodeId":string}],"verifiedCount":number,"totalClaims":number,"score":number,"composureNote":string}`;
 
 // Structured-output JSON schema (Claude path). Every object: additionalProperties:false, all
 // properties required (optional fields use "" sentinel).
@@ -64,8 +72,9 @@ const DEBRIEF_JSON_SCHEMA = {
           verdict: { type: 'string', enum: ['verified', 'flagged', 'unverifiable'] },
           sourceUrl: { type: 'string' },
           correctValue: { type: 'string' },
+          nodeId: { type: 'string' },
         },
-        required: ['quote', 'verdict', 'sourceUrl', 'correctValue'],
+        required: ['quote', 'verdict', 'sourceUrl', 'correctValue', 'nodeId'],
       },
     },
     flags: {
@@ -79,33 +88,46 @@ const DEBRIEF_JSON_SCHEMA = {
           correctValue: { type: 'string' },
           sourceUrl: { type: 'string' },
           severity: { type: 'string', enum: ['low', 'medium', 'high'] },
+          recovery: { type: 'string', enum: ['recovered', 'doubled-down', 'not-challenged'] },
+          nodeId: { type: 'string' },
         },
-        required: ['quote', 'issue', 'correctValue', 'sourceUrl', 'severity'],
+        required: ['quote', 'issue', 'correctValue', 'sourceUrl', 'severity', 'recovery', 'nodeId'],
       },
     },
     verifiedCount: { type: 'integer' },
     totalClaims: { type: 'integer' },
     score: { type: 'integer' },
+    composureNote: { type: 'string' },
   },
-  required: ['claims', 'flags', 'verifiedCount', 'totalClaims', 'score'],
+  required: ['claims', 'flags', 'verifiedCount', 'totalClaims', 'score', 'composureNote'],
 } as const;
 
-function packForPrompt(pack: FactPack): string {
-  const facts = pack.facts
-    .map((f, i) => `[${i + 1}] (${f.claim}) ${f.value}\n    source: ${f.sourceUrl}`)
-    .join('\n');
-  return `TARGET: ${pack.target}\n\nCITED FACT PACK (ground truth):\n${facts}`;
+// The ground-truth fact pack AND the node-id catalog in one block: every fact topic and
+// related entity carries its graph-node id in [brackets], so the model can both fact-check
+// against the values and tag each claim with the node it lands on (for the coverage graph).
+function packForPrompt(packs: FactPack[]): string {
+  const targets = packs.map((p) => p.target).join(', ');
+  const blocks = packs.map((p) => {
+    const facts = factEntries(p)
+      .map((f) => `  [${f.id}] (${f.label}) ${f.value}\n     source: ${f.sourceUrl}`)
+      .join('\n');
+    const ents = entityEntries([p])
+      .map((e) => `  [${e.id}] ${e.name} (${e.type})`)
+      .join('\n');
+    return `### ${p.target}  [${nodeIdForCompany(p.target)}]\nFACT TOPICS:\n${facts}\nRELATED ENTITIES (names the candidate may reference):\n${ents}`;
+  });
+  return `TARGET COMPANIES: ${targets}\n\nCITED FACT PACK (ground truth — the ONLY facts you may use). Each node carries its id in [brackets]:\n\n${blocks.join('\n\n')}`;
 }
 
-function userPrompt(transcript: TranscriptTurn[], pack: FactPack): string {
+function userPrompt(transcript: TranscriptTurn[], packs: FactPack[]): string {
   const t = transcript
     .map((x) => `${x.role === 'candidate' ? 'CANDIDATE' : 'INTERVIEWER'}: ${x.text}`)
     .join('\n');
-  return `${packForPrompt(pack)}\n\n---\n\nINTERVIEW TRANSCRIPT:\n${t}\n\nProduce the scorecard.`;
+  return `${packForPrompt(packs)}\n\n---\n\nINTERVIEW TRANSCRIPT:\n${t}\n\nProduce the scorecard.`;
 }
 
 function finalize(raw: unknown): DebriefResult {
-  const parsed = DebriefZ.parse(raw);
+  const parsed = DebriefZ.parse(raw); // claims/flags now carry nodeId (default "") → passed through
   const verifiedCount = parsed.claims.filter((c) => c.verdict === 'verified').length;
   return {
     claims: parsed.claims,
@@ -113,6 +135,7 @@ function finalize(raw: unknown): DebriefResult {
     verifiedCount,
     totalClaims: parsed.claims.length,
     score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+    composureNote: parsed.composureNote,
   };
 }
 
@@ -135,7 +158,7 @@ export function debriefProvider(): DebriefProvider {
 }
 
 // ---- Claude path (claude-opus-4-8, adaptive thinking, structured output) ----
-async function claudeDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise<DebriefResult> {
+async function claudeDebrief(transcript: TranscriptTurn[], packs: FactPack[]): Promise<DebriefResult> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic();
   const message = await client.messages.create({
@@ -147,7 +170,7 @@ async function claudeDebrief(transcript: TranscriptTurn[], pack: FactPack): Prom
       format: { type: 'json_schema', schema: DEBRIEF_JSON_SCHEMA },
     },
     system: SYSTEM,
-    messages: [{ role: 'user', content: userPrompt(transcript, pack) }],
+    messages: [{ role: 'user', content: userPrompt(transcript, packs) }],
   });
   const text = message.content
     .map((b) => ('text' in b && typeof b.text === 'string' ? b.text : ''))
@@ -156,7 +179,7 @@ async function claudeDebrief(transcript: TranscriptTurn[], pack: FactPack): Prom
 }
 
 // ---- GLM-5.2 path (Z.ai OpenAI-compatible; thinking disabled so content is populated) ----
-async function glmDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise<DebriefResult> {
+async function glmDebrief(transcript: TranscriptTurn[], packs: FactPack[]): Promise<DebriefResult> {
   const key = process.env.GLM_API_KEY;
   if (!key) throw new Error('No debrief key: set ANTHROPIC_API_KEY or GLM_API_KEY');
   const res = await fetch('https://api.z.ai/api/coding/paas/v4/chat/completions', {
@@ -170,7 +193,7 @@ async function glmDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: `${SYSTEM}\n\n${SHAPE}` },
-        { role: 'user', content: userPrompt(transcript, pack) },
+        { role: 'user', content: userPrompt(transcript, packs) },
       ],
     }),
   });
@@ -181,11 +204,12 @@ async function glmDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise
   return finalize(JSON.parse(stripFences(content)));
 }
 
-/** Run the (cited) debrief pass with whichever reasoner is configured. */
-export function buildDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise<DebriefResult> {
+/** Run the (cited) debrief pass with whichever reasoner is configured. Takes the un-merged
+ *  prep packs so the prompt's node catalog has per-company ids matching the coverage graph. */
+export function buildDebrief(transcript: TranscriptTurn[], packs: FactPack[]): Promise<DebriefResult> {
   return debriefProvider() === 'claude'
-    ? claudeDebrief(transcript, pack)
-    : glmDebrief(transcript, pack);
+    ? claudeDebrief(transcript, packs)
+    : glmDebrief(transcript, packs);
 }
 
 // ---- General (ungrounded) debrief: delivery coaching, no fact-check ----------------------

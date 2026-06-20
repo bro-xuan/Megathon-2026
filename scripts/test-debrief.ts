@@ -29,7 +29,7 @@ const TRANSCRIPT: TranscriptTurn[] = [
   }
   console.log(`Loaded Stripe pack: ${pack.facts.length} cited facts. Reasoner: ${debriefProvider()}. Running debrief…\n`);
 
-  const debrief = await buildDebrief(TRANSCRIPT, pack);
+  const debrief = await buildDebrief(TRANSCRIPT, [pack]);
 
   console.log(`SCORE: ${debrief.score}/100`);
   console.log(`VERIFIED: ${debrief.verifiedCount} of ${debrief.totalClaims} claims\n`);
@@ -44,9 +44,14 @@ const TRANSCRIPT: TranscriptTurn[] = [
 
   console.log('\nFLAGS (bluffs caught):');
   for (const f of debrief.flags) {
-    console.log(`  [${f.severity}] "${f.quote.slice(0, 60)}"\n     issue: ${f.issue}\n     correct: ${f.correctValue}\n     source: ${f.sourceUrl}`);
+    console.log(`  [${f.severity}] "${f.quote.slice(0, 60)}"\n     issue: ${f.issue}\n     correct: ${f.correctValue}\n     recovery: ${f.recovery}\n     source: ${f.sourceUrl}`);
   }
 
+  console.log(`\nCOMPOSURE: ${debrief.composureNote}`);
+
   const caughtValuation = debrief.flags.some((f) => /159|billion|valu/i.test(f.correctValue + f.issue));
+  // The candidate repeated "roughly 65 billion" after the MD pushed — a textbook double-down.
+  const caughtDoubleDown = debrief.flags.some((f) => /valu|159|65/i.test(f.correctValue + f.issue) && f.recovery === 'doubled-down');
   console.log(`\n${caughtValuation ? '✅ CAUGHT the valuation bluff with a citation.' : '❌ Did NOT catch the valuation bluff.'}`);
+  console.log(`${caughtDoubleDown ? '✅ FLAGGED the double-down (candidate repeated $65B when pushed).' : '⚠️  Did not flag the valuation double-down.'}`);
 })();

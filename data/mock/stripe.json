@@ -40,7 +40,8 @@
         "quote": "Stripe is a payments company founded in 2010 by the Collison brothers, Patrick and John.",
         "verdict": "verified",
         "sourceUrl": "https://stripe.com/",
-        "correctValue": ""
+        "correctValue": "",
+        "nodeId": "fact:stripe:founders"
       },
       {
         "quote": "It's still private",
@@ -52,19 +53,22 @@
         "quote": "last I checked it was valued around 65 billion dollars after a down round.",
         "verdict": "flagged",
         "sourceUrl": "https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html",
-        "correctValue": "Most recent valuation is $159 billion (Feb 2026 tender offer). $65 billion was a 2023 employee tender — not the latest."
+        "correctValue": "Most recent valuation is $159 billion (Feb 2026 tender offer). $65 billion was a 2023 employee tender — not the latest.",
+        "nodeId": "fact:stripe:valuation"
       },
       {
         "quote": "I think they also recently moved their headquarters to Dublin.",
         "verdict": "flagged",
         "sourceUrl": "https://stripe.com/",
-        "correctValue": "Headquarters is at 354 Oyster Point Blvd, South San Francisco, CA. No mention of Dublin."
+        "correctValue": "Headquarters is at 354 Oyster Point Blvd, South San Francisco, CA. No mention of Dublin.",
+        "nodeId": "fact:stripe:headquarters"
       },
       {
         "quote": "They acquired a metering company called Metronome to push into usage-based billing.",
         "verdict": "verified",
         "sourceUrl": "https://backlinko.com/stripe-users",
-        "correctValue": ""
+        "correctValue": "",
+        "nodeId": "entity:metronome"
       }
     ],
     "flags": [
@@ -73,18 +77,23 @@
         "issue": "Stated $65B as current valuation; fact pack shows $159B (Feb 2026) as most recent. $65B was a 2023 employee tender, not the latest figure.",
         "correctValue": "$159 billion (February 2026 tender offer)",
         "sourceUrl": "https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html",
-        "severity": "high"
+        "severity": "high",
+        "recovery": "doubled-down",
+        "nodeId": "fact:stripe:valuation"
       },
       {
         "quote": "I think they also recently moved their headquarters to Dublin.",
         "issue": "Fact pack lists headquarters as South San Francisco, CA; no mention of Dublin.",
         "correctValue": "354 Oyster Point Blvd, South San Francisco, CA",
         "sourceUrl": "https://stripe.com/",
-        "severity": "medium"
+        "severity": "medium",
+        "recovery": "not-challenged",
+        "nodeId": "fact:stripe:headquarters"
       }
     ],
     "verifiedCount": 3,
     "totalClaims": 5,
-    "score": 45
+    "score": 45,
+    "composureNote": "The MD gave you an opening — “you sure about that number?” — and you repeated $65B instead of reconsidering. Doubling down on a stale figure reads worse than the wrong number itself. The Dublin-HQ slip went unchallenged this round, but it's exactly the careless aside that ends a real pitch."
   }
 }

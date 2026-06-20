@@ -22,7 +22,7 @@ const TRANSCRIPT: TranscriptTurn[] = [
 (async () => {
   const pack = await readCachedPack(TARGET);
   if (!pack) throw new Error('Run: npm run build:packs Stripe');
-  const debrief = await buildDebrief(TRANSCRIPT, pack);
+  const debrief = await buildDebrief(TRANSCRIPT, [pack]);
   mkdirSync('data/mock', { recursive: true });
   const out = { target: TARGET, transcript: TRANSCRIPT, debrief };
   writeFileSync('data/mock/stripe.json', JSON.stringify(out, null, 2));

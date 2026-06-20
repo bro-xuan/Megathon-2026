@@ -30,6 +30,12 @@ export type FactPack = {
   fetchedAt: string; // ISO timestamp
 };
 
+/** What the candidate did once this bluff was on the table — the "reveal" we coach to.
+ *  'recovered'  = the interviewer pushed back and the candidate corrected/retracted/acknowledged.
+ *  'doubled-down' = the interviewer pushed back and the candidate insisted on the wrong claim.
+ *  'not-challenged' = the interviewer never tested this specific claim (it slipped by). */
+export type Recovery = 'recovered' | 'doubled-down' | 'not-challenged';
+
 /** A bluff caught in the debrief: a claim that contradicts the fact pack. */
 export type FactCheckFlag = {
   quote: string;
@@ -37,6 +43,8 @@ export type FactCheckFlag = {
   correctValue: string;
   sourceUrl: string;
   severity: 'low' | 'medium' | 'high';
+  recovery?: Recovery; // how the candidate handled being caught — the composure signal
+  nodeId?: string; // coverage-graph node this bluff lands on (see lib/coverage-graph.ts)
 };
 
 /** Every factual claim the candidate made, checked against the pack (citation density). */
@@ -45,6 +53,7 @@ export type ClaimCheck = {
   verdict: 'verified' | 'flagged' | 'unverifiable';
   sourceUrl?: string;
   correctValue?: string;
+  nodeId?: string; // coverage-graph node this claim is about (see lib/coverage-graph.ts)
 };
 
 /** One turn of the interview transcript (candidate vs. interviewer). */
@@ -60,7 +69,60 @@ export type DebriefResult = {
   flags: FactCheckFlag[];
   verifiedCount: number;
   totalClaims: number;
-  score: number; // 0–100
+  score: number; // 0–100 factual accuracy
+  composureNote?: string; // one-line read on how the candidate handled being caught out (the reveal)
+  packs?: FactPack[]; // un-merged prep packs, carried to the client to build the coverage graph
+};
+
+// ── Coverage graph (post-call evaluation hero) ───────────────────────────────
+// The Cala knowledge graph (companies → cited fact-topics → related entities),
+// overlaid with how the candidate handled each node. See lib/coverage-graph.ts.
+
+/** How the candidate handled a node (worst-wins when a node has multiple claims). */
+export type NodeCoverage = 'verified' | 'flagged' | 'unverifiable' | 'untouched';
+
+export type GraphNodeKind = 'company' | 'fact' | 'entity';
+
+/** The candidate's words behind a node's coverage (for the hover tooltip). */
+export type NodeEvidence = {
+  quote: string;
+  verdict: ClaimCheck['verdict'];
+  correctValue?: string;
+  sourceUrl?: string;
+};
+
+/** A node in the coverage graph, with precomputed layout coords (abstract viewBox space). */
+export type GraphNode = {
+  id: string; // company:<slug> | fact:<company>:<label> | entity:<name>
+  kind: GraphNodeKind;
+  label: string; // display text
+  company: string; // owning target ("" for shared entities)
+  entityType?: string; // relationship.type for entity nodes (Person/Company/…)
+  value?: string; // fact.value (tooltip)
+  sourceUrl?: string;
+  sourceName?: string;
+  coverage: NodeCoverage;
+  evidence: NodeEvidence[];
+  x: number;
+  y: number;
+  visible: boolean; // focused density: false = collapsed behind "+N more"
+};
+
+export type GraphEdge = {
+  from: string; // node id
+  to: string; // node id
+  kind: 'fact' | 'relationship';
+};
+
+/** A serializable (plain-JSON) coverage graph ready to hand to the client component. */
+export type CoverageGraph = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  centers: string[]; // company node ids
+  width: number;
+  height: number;
+  hiddenCount: number; // untouched entities collapsed behind "+N more"
+  stats: { verified: number; flagged: number; unverifiable: number; untouched: number };
 };
 
 /** Delivery-coaching debrief for UNGROUNDED tracks (behavioral/technical) — no fact-check. */

@@ -3,7 +3,7 @@
 // prep library. Ungrounded tracks (behavioral, technical) → delivery-coaching review (no
 // fact-check). Provider = Claude if ANTHROPIC_API_KEY, else GLM-5.2.
 
-import { getPrepPacks, mergePacks } from '@/lib/factpack';
+import { getPrepPacks } from '@/lib/factpack';
 import { buildDebrief, buildGeneralDebrief } from '@/lib/debrief';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
 import type { TranscriptTurn } from '@/lib/types';
@@ -24,8 +24,11 @@ export async function POST(request: Request) {
   }
   try {
     if (track.grounded) {
-      const pack = mergePacks(await getPrepPacks(PREP_TARGETS));
-      return Response.json(await buildDebrief(transcript, pack));
+      // Un-merged packs: buildDebrief uses them for the per-company node catalog, and we return
+      // them so the client can build the coverage graph (nodes/edges) alongside the scorecard.
+      const packs = await getPrepPacks(PREP_TARGETS);
+      const debrief = await buildDebrief(transcript, packs);
+      return Response.json({ ...debrief, packs });
     }
     return Response.json(await buildGeneralDebrief(transcript, track.title));
   } catch (err) {

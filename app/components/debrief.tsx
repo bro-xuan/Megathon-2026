@@ -30,39 +30,80 @@ function ScoreGauge({ score, label }: { score: number; label: string }) {
   );
 }
 
-/** Top scorecard — overall accuracy gauge + the citation-density tally. */
+/** Top scorecard — accuracy gauge + citation-density tally + the recovery read (the reveal). */
 export function ScorePanel({ debrief }: { debrief: DebriefResult }) {
-  const { score, verifiedCount, totalClaims, flags } = debrief;
+  const { score, verifiedCount, totalClaims, flags, composureNote } = debrief;
+  // Recovery is measured only over bluffs the interviewer actually challenged.
+  const challenged = flags.filter((f) => f.recovery === "recovered" || f.recovery === "doubled-down");
+  const recovered = challenged.filter((f) => f.recovery === "recovered").length;
+  const allOwned = challenged.length > 0 && recovered === challenged.length;
   return (
-    <section className="card-product flex flex-wrap items-center gap-[2rem] reveal">
-      <ScoreGauge score={score} label="accuracy" />
-      <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
-      <div>
-        <div className="label-eyebrow">Claims verified</div>
-        <div className="font-display text-[2.2rem] leading-tight" style={{ color: "var(--verified-deep)" }}>
-          {verifiedCount}
-          <span className="text-muted text-[1.1rem] font-sans"> / {totalClaims}</span>
+    <section className="card-product flex flex-col gap-[1.5rem] reveal">
+      <div className="flex flex-wrap items-center gap-[2rem]">
+        <ScoreGauge score={score} label="accuracy" />
+        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
+        <div>
+          <div className="label-eyebrow">Claims verified</div>
+          <div className="font-display text-[2.2rem] leading-tight" style={{ color: "var(--verified-deep)" }}>
+            {verifiedCount}
+            <span className="text-muted text-[1.1rem] font-sans"> / {totalClaims}</span>
+          </div>
+          <div className="text-muted text-[0.8rem]">every one linked to a source</div>
         </div>
-        <div className="text-muted text-[0.8rem]">every one linked to a source</div>
-      </div>
-      <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
-      <div>
-        <div className="label-eyebrow">Bluffs caught</div>
-        <div
-          className="font-display text-[2.2rem] leading-tight"
-          style={{ color: flags.length ? "var(--flag)" : "var(--verified)" }}
-        >
-          {flags.length}
+        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
+        <div>
+          <div className="label-eyebrow">Bluffs caught</div>
+          <div
+            className="font-display text-[2.2rem] leading-tight"
+            style={{ color: flags.length ? "var(--flag)" : "var(--verified)" }}
+          >
+            {flags.length}
+          </div>
+          <div className="text-muted text-[0.8rem]">all sourced</div>
         </div>
-        <div className="text-muted text-[0.8rem]">all sourced</div>
+        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
+        <div>
+          <div className="label-eyebrow">Recovery</div>
+          {challenged.length ? (
+            <>
+              <div
+                className="font-display text-[2.2rem] leading-tight"
+                style={{ color: allOwned ? "var(--verified)" : "var(--flag)" }}
+              >
+                {recovered}
+                <span className="text-muted text-[1.1rem] font-sans"> / {challenged.length} owned</span>
+              </div>
+              <div className="text-muted text-[0.8rem]">when the MD pushed back</div>
+            </>
+          ) : (
+            <>
+              <div className="font-display text-[2.2rem] leading-tight text-muted">—</div>
+              <div className="text-muted text-[0.8rem]">no bluff was tested</div>
+            </>
+          )}
+        </div>
       </div>
+      {composureNote && flags.length > 0 && (
+        <div className="border-t border-border pt-[1.25rem]">
+          <div className="label-eyebrow mb-1">Composure</div>
+          <p className="text-[0.95rem]">{composureNote}</p>
+        </div>
+      )}
     </section>
   );
 }
 
-/** A caught bluff: quote · issue · correct value · source. Reveals with a stagger. */
+// How the candidate handled the bluff once it was on the table — the coaching payload.
+const RECOVERY_VIEW: Record<NonNullable<FactCheckFlag["recovery"]>, { mark: string; text: string; color: string }> = {
+  recovered: { mark: "✓", text: "Owned it — corrected when the MD pushed back", color: "var(--verified)" },
+  "doubled-down": { mark: "✕", text: "Doubled down — repeated the wrong figure under pressure", color: "var(--flag)" },
+  "not-challenged": { mark: "·", text: "Slipped by — the MD didn't test it this round", color: "var(--muted)" },
+};
+
+/** A caught bluff: quote · issue · correct value · what you did when pushed · source. Reveals with a stagger. */
 export function FlagCard({ flag, index = 0 }: { flag: FactCheckFlag; index?: number }) {
   const color = SEVERITY_COLOR[flag.severity];
+  const rec = flag.recovery ? RECOVERY_VIEW[flag.recovery] : null;
   return (
     <div
       className="card-product card-interactive border-l-[3px] reveal"
@@ -82,6 +123,12 @@ export function FlagCard({ flag, index = 0 }: { flag: FactCheckFlag; index?: num
         <span className="text-muted">Correct: </span>
         <span className="fact-value" style={{ color: "var(--verified-deep)" }}>{flag.correctValue}</span>
       </p>
+      {rec && (
+        <p className="text-[0.85rem] mb-3 flex items-center gap-2" style={{ color: rec.color }}>
+          <span aria-hidden>↳</span>
+          <span><span className="font-semibold">{rec.mark}</span> {rec.text}</span>
+        </p>
+      )}
       {flag.sourceUrl && <SourceChip url={flag.sourceUrl} />}
     </div>
   );
