@@ -66,10 +66,19 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
 - **Spar mode** — live Vapi voice mock interview grounded in the fact pack.
 - **Fact-check + Debrief** — post-call transcript with bluffs flagged and **sourced**, plus
   a simple score. *This is the differentiator — protect it.*
+- **Presentation layer (M5 polish)** — Spar styled as a **"video call"** (static interviewer
+  image + call chrome; audio-only browser call underneath) and a **faked Cal-style scheduling**
+  screen (book a slot → "Join now" starts the call immediately).
+
+### Optional / stretch (only after the core works)
+- **Mollie test-mode paywall** (M6, the last step) — a Business/Distribution-score booster;
+  the Mollie account already qualifies us for the Startup track regardless. See `TASKS.md`.
 
 ### Out of scope (pitch as "platform", don't build)
 - Multiple verticals (sales, negotiation) beyond the IB interview.
 - Arbitrary user-entered targets on stage (curated demo companies only).
+- **Real video streams, phone calls / Twilio, and any real time-triggered scheduling backend.**
+- Deep Mollie integration beyond a test-mode checkout.
 - Auth, persistence beyond a JSON cache, multi-user, mobile-native.
 - Wispr Flow API integration.
 
@@ -84,6 +93,9 @@ interview), and it's load-bearing for **both** sponsor prizes in a single build.
    *(Fact-check / Debrief)*
 4. As a candidate, I explore the company's relationships (owners, funders, board) as a graph
    where each edge links to its source. *(Study — graph, cut-able)*
+5. As a candidate, I "book" my interview on a Cal-style scheduling screen and join a
+   video-call-style session — realistic framing, even though the call starts on demand.
+   *(Schedule → Spar; scheduling is faked, no real time-trigger)*
 
 ## 7. Success criteria
 
@@ -140,8 +152,9 @@ reliable post-call Claude pass.
 **Route / file map:**
 ```
 app/page.tsx                  Landing: pick scenario (IB) + target
+app/schedule/page.tsx         Schedule: faked Cal-style booking → "Join now" starts the call
 app/study/[target]/page.tsx   Study: cited fact-pack cards + knowledge graph
-app/spar/[target]/page.tsx    Spar: Vapi call UI (mic, live transcript)
+app/spar/[target]/page.tsx    Spar: "video call" UI (interviewer image, mic, live transcript)
 app/debrief/[callId]/page.tsx Debrief: transcript w/ sourced flags + score
 app/api/factpack/route.ts     GET ?target= → Cala → normalized cited pack (cached)
 app/api/call/[id]/route.ts    GET → proxy Vapi GET /call/{id} (timestamped transcript)
@@ -179,7 +192,8 @@ graph unfinished → Study keeps the card view.
 ## 10. Milestones
 
 See `TASKS.md`. M0 de-risk both APIs → M1 fact pack → M2 voice loop → M3 fact-check+debrief
-→ M4 graph (cut line) → M5 polish + demo hardening. Each milestone is demo-able.
+→ M4 graph (cut line) → M5 polish + demo hardening (incl. the "video call" skin + fake
+scheduling) → M6 optional Mollie paywall (the last step). Each milestone is demo-able.
 
 ## 11. Demo narrative
 
