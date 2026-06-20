@@ -12,6 +12,22 @@ import { getPrepPacks } from '@/lib/factpack';
 import { getPersona } from '@/lib/persona';
 import { buildAssistant, buildPersonaAssistant } from '@/lib/vapi-assistant';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
+import type { FactPack } from '@/lib/types';
+
+// Slim, client-safe fact list for the live "facts in play" rail — the cited topics the
+// interviewer can probe. No prompt text leaks; just claim + company + source. Deduped by
+// company+topic so the rail shows one chip per probe-able topic (no repeated labels).
+function slimFacts(packs: FactPack[]) {
+  const seen = new Set<string>();
+  return packs.flatMap((p) =>
+    p.facts.flatMap((f) => {
+      const key = `${p.target}·${f.claim}`;
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ claim: f.claim, target: p.target, sourceName: f.sourceName, sourceUrl: f.sourceUrl }];
+    }),
+  );
+}
 
 // Persistent Vapi assistant ids (one per track) written by `npm run sync:vapi`. When present we
 // hand the client the dashboard assistant id; the inline `assistant` below stays as the fallback.
@@ -47,7 +63,7 @@ export async function GET(request: Request) {
       const packs = base?.grounded ? await getPrepPacks(PREP_TARGETS) : [];
       const assistant = buildPersonaAssistant(profile, packs, { candidateName, voiceId });
       const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
-      return Response.json({ assistant, assistantId: undefined, factCount });
+      return Response.json({ assistant, assistantId: undefined, factCount, facts: slimFacts(packs) });
     }
 
     const track = trackId ? getTrack(trackId) : undefined;
@@ -56,7 +72,7 @@ export async function GET(request: Request) {
     const assistant = buildAssistant(track, packs, { candidateName, voiceId });
     const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
     const assistantId = await persistedAssistantId(track.id);
-    return Response.json({ assistant, assistantId, factCount });
+    return Response.json({ assistant, assistantId, factCount, facts: slimFacts(packs) });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to build assistant';
     return Response.json({ error: message }, { status: 502 });

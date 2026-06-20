@@ -10,6 +10,15 @@ import type { PersonaProfile, TranscriptTurn } from "@/lib/types";
 
 type Phase = "idle" | "connecting" | "live" | "debriefing" | "error";
 
+/** A cited topic the interviewer can probe, surfaced live (from /api/assistant). */
+type LiveFact = { claim: string; target: string; sourceName?: string; sourceUrl: string };
+
+function mmss(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export default function SparRoute({ params }: { params: Promise<{ track: string }> }) {
   return (
     <Suspense fallback={null}>
@@ -34,8 +43,12 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
   // Safety net: if we enter "connecting" and never reach "live" (no mic, network, Vapi
   // hiccup), this timer flips us to the error state instead of spinning forever.
   const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
+  const startedAtRef = useRef<number | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
+  const [facts, setFacts] = useState<LiveFact[]>([]);
+  const [elapsed, setElapsed] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   const [error, setError] = useState<string>("");
@@ -67,6 +80,21 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
       vapiRef.current?.stop();
     };
   }, []);
+
+  // Tick an elapsed-time clock while the call is live (interviews are time-boxed).
+  useEffect(() => {
+    if (phase !== "live") return;
+    const id = setInterval(() => {
+      if (startedAtRef.current) setElapsed(Math.floor((Date.now() - startedAtRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  // Keep the transcript pinned to the latest turn so new answers never hide below the fold.
+  useEffect(() => {
+    const el = transcriptRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [turns]);
 
   if (!baseTrack) notFound();
 
@@ -102,11 +130,13 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
       const res = await fetch(assistantUrl);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load assistant");
+      setFacts(Array.isArray(data.facts) ? data.facts : []);
 
       const vapi = new Vapi(publicKey);
       vapiRef.current = vapi;
       vapi.on("call-start", () => {
         clearConnectTimer();
+        startedAtRef.current = Date.now();
         setPhase("live");
       });
       vapi.on("speech-start", () => setSpeaking(true));
@@ -125,13 +155,27 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
         setError(detail || "Vapi error (see console)");
         setPhase("error");
       });
-      vapi.on("message", (msg: { type?: string; role?: string; transcript?: string; transcriptType?: string }) => {
-        if (msg.type === "transcript" && msg.transcriptType === "final" && msg.transcript) {
-          setTurns((prev) => [
-            ...prev,
-            { role: msg.role === "user" ? "candidate" : "interviewer", text: msg.transcript! },
-          ]);
+      // Vapi emits a rolling `conversation-update` carrying the FULL deduplicated
+      // conversation. Use it as the source of truth — rebuild turns each update.
+      // (Raw `final` transcripts arrive one-per-pause and get dropped/reordered, which
+      // splits one spoken answer into several broken bubbles and loses some entirely.)
+      vapi.on("message", (msg: {
+        type?: string;
+        conversation?: { role?: string; content?: string }[];
+      }) => {
+        if (msg.type !== "conversation-update" || !Array.isArray(msg.conversation)) return;
+        const next: TranscriptTurn[] = [];
+        for (const m of msg.conversation) {
+          const text = m.content?.trim();
+          if (!text || (m.role !== "user" && m.role !== "assistant" && m.role !== "bot")) continue;
+          const role: TranscriptTurn["role"] = m.role === "user" ? "candidate" : "interviewer";
+          // Coalesce consecutive same-role fragments into one bubble so a single spoken
+          // turn reads as one paragraph instead of several broken lines.
+          const last = next[next.length - 1];
+          if (last && last.role === role) last.text = `${last.text} ${text}`;
+          else next.push({ role, text });
         }
+        setTurns(next);
       });
       // Arm the safety net before starting: if "call-start" never fires within 15s, bail to the
       // error state (with the sample-debrief fallback) instead of spinning on "connecting".
@@ -292,45 +336,78 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
     <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
       <div className="flex items-center justify-between">
         <span className="label-eyebrow">Greenroom · {track!.persona}</span>
-        <span className="label-eyebrow">{phase === "live" ? "● live" : phase}</span>
+        <span className="label-eyebrow">
+          {phase === "live" ? `● live · ${mmss(elapsed)}` : phase}
+        </span>
       </div>
 
       <div className="grid gap-[1.5rem] md:grid-cols-[1.4fr_1fr] flex-1">
-        {/* Interviewer "video" stage (static avatar + speaking state) */}
-        <div className="card-product flex flex-col items-center justify-center gap-4 min-h-[24rem] relative">
-          <div
-            className="w-[8rem] h-[8rem] rounded-full bg-surface border border-border flex items-center justify-center font-display text-[2rem] transition-shadow"
-            style={speaking ? { boxShadow: "0 0 0 0.4rem color-mix(in srgb, var(--ink) 8%, transparent)" } : undefined}
-          >
-            {track!.avatar}
+        {/* Interviewer "video" stage (avatar + speaking state + live facts rail) */}
+        <div className="card-product flex flex-col gap-4 min-h-[24rem] relative">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <div
+              className="w-[8rem] h-[8rem] rounded-full bg-surface border border-border flex items-center justify-center font-display text-[2rem] transition-shadow"
+              style={speaking ? { boxShadow: "0 0 0 0.4rem color-mix(in srgb, var(--ink) 8%, transparent)" } : undefined}
+            >
+              {track!.avatar}
+            </div>
+            <div className="text-center">
+              <div className="font-display text-[1.2rem]">{track!.persona}</div>
+              <div className="text-muted text-[0.85rem]">
+                {phase === "live" ? (speaking ? "Speaking…" : "Listening…") : track!.title}
+              </div>
+            </div>
+            {phase === "connecting" && (
+              <p className="text-muted text-[0.85rem]">
+                {grounded ? "Loading your cited prep packs…" : "Connecting…"}
+              </p>
+            )}
+            {phase === "debriefing" && (
+              <p className="text-muted text-[0.85rem]">
+                {grounded ? "Scoring your answers against the sources…" : "Reviewing your delivery…"}
+              </p>
+            )}
+            {phase === "error" && (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>
+                {/* Demo insurance: if the live call won't connect, jump to the precomputed debrief. */}
+                <Link href="/debrief/mock-stripe" className="btn-secondary">
+                  Show sample debrief →
+                </Link>
+              </div>
+            )}
           </div>
-          <div className="text-center">
-            <div className="font-display text-[1.2rem]">{track!.persona}</div>
-            <div className="text-muted text-[0.85rem]">{track!.title}</div>
-          </div>
-          {phase === "connecting" && (
-            <p className="text-muted text-[0.85rem]">
-              {grounded ? "Loading your cited prep packs…" : "Connecting…"}
-            </p>
-          )}
-          {phase === "debriefing" && (
-            <p className="text-muted text-[0.85rem]">
-              {grounded ? "Scoring your answers against the sources…" : "Reviewing your delivery…"}
-            </p>
-          )}
-          {phase === "error" && (
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>
-              {/* Demo insurance: if the live call won't connect, jump to the precomputed debrief. */}
-              <Link href="/debrief/mock-stripe" className="btn-secondary">
-                Show sample debrief →
-              </Link>
+
+          {/* Facts in play — the cited topics the interviewer can probe, visible mid-call.
+              Bluff one and it surfaces in the debrief with its source. */}
+          {grounded && facts.length > 0 && (phase === "live" || phase === "connecting") && (
+            <div className="border-t border-border pt-4">
+              <div className="label-eyebrow mb-2">
+                Facts in play · grounded in {facts.length} cited facts
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {facts.slice(0, 12).map((f, i) => (
+                  <a
+                    key={`${f.target}-${f.claim}-${i}`}
+                    href={f.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="source-chip"
+                    title={f.sourceName ? `${f.target} · source: ${f.sourceName}` : f.target}
+                  >
+                    {f.target} · {f.claim}
+                  </a>
+                ))}
+                {facts.length > 12 && (
+                  <span className="label-eyebrow self-center">+{facts.length - 12} more</span>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {/* Live transcript rail */}
-        <div className="card-product overflow-auto max-h-[28rem]">
+        <div ref={transcriptRef} className="card-product overflow-auto max-h-[28rem]">
           <div className="label-eyebrow mb-3">
             {grounded ? "Live transcript · grounded in cited facts" : "Live transcript"}
           </div>
