@@ -52,6 +52,28 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
 ## Decision log & API quirks (append newest at top)
 
+**Cala API VERIFIED (2026-06-20)** — corrects the stale "verify if stale" block below; see
+`scripts/test-cala.ts` + `data/cala-raw/*.json`. Base `https://api.cala.ai`, header `X-API-KEY`.
+- **`knowledge_search` is the PRIMARY (and sufficient) source.** `POST /v1/knowledge/search`
+  body **`{ input: string }`** (NOT `query`). Returns `{ content, explainability[], context[],
+  entities[] }`: `content` = grounded markdown summary (recent + dated — great for prompt
+  injection); `context[]` = cited evidence chunks, citations at
+  **`context[].origins[].source.{name,url}`**; `explainability[]` = `{ content (a claim),
+  references: [context.id] }` → the claim→source map that powers the citation-dense scorecard;
+  `entities[]` = `{id,name,entity_type}` related-entity network (use for the relationship list/graph).
+- `entity_search` = **`GET /v1/entities?name=...`** (NOT POST) → `{ entities:[...] }`; returns
+  multiple/duplicate matches, some sparse — pick by richness, don't assume `[0]`.
+- `retrieve_entity` = `POST /v1/entities/{uuid}` body `{}` → profile, but **`relationships`
+  come back EMPTY** (tried depth/include/expand/hops — all empty). **Do NOT rely on it for the
+  network; the relationships live in `knowledge_search` context prose + `entities`.**
+- Free tier 100 credits/mo, 10 req/min → cache packs. Console `console.cala.ai`.
+
+**Scaffold (2026-06-20):** repo is now a **Next.js 16.2.9 + React 19.2.4** app (App Router, TS,
+Tailwind v4, no src dir, import alias `@/*`). Newer than training data — Next bundles its own
+docs at `node_modules/next/dist/docs/` (read before using new Next APIs). Pinned
+`turbopack.root` in `next.config.ts` (a `~/pnpm-lock.yaml` otherwise mis-infers the workspace root).
+`lib/cala.ts` + `lib/types.ts` written; `npx tsc --noEmit` clean; `npm run dev` → HTTP 200.
+
 **Decisions (2026-06-20):** Split the interviewer LLM by latency. **Live (Spar) = Groq
 `llama-3.3-70b-versatile`** via Vapi BYO key — measured **~0.2s TTFB** streaming (vs ~1.7s
 GLM, ~0.7–1s Claude Haiku). Live model is **grounded-only**: it answers from the injected

@@ -1,0 +1,370 @@
+{
+  "target": "Stripe",
+  "entityId": "",
+  "summary": "## Stripe: Overview\nStripe is a global fintech company that provides a financial infrastructure platform for accepting payments and growing revenue. Founded in 2010 and headquartered at 354 Oyster Point Blvd, South San Francisco, CA, Stripe designs and produces software to process online debit and credit card payments. The company operates in fintech, software and services, and internet and web services industries. Stripe had approximately 8,150 employees as of the latest reported data.\n\n## Founders\nStripe was founded in 2010 by brothers **Patrick Collison** (CEO) and **John Collison**. Both brothers continue to lead the company.\n\n## Owners and Major Shareholders\nMajor shareholders and investors include Sequoia Capital, Andreessen Horowitz, Goldman Sachs, Thrive Capital, Coatue, Silver Lake, and SeedFord Partners.\n\n## Board Members\nBoard members include:\n- Mark Carney\n- Christa Davies\n- Michael Moritz\n- Jonathan Chadwick\n- Luciana Lixandru\n- Kevin Kelly\n- John Collison\n- Patrick Collison\n- Diane Greene\n- Matt Huang\n\n## Competitors\nStripe competes with numerous payments and fintech companies, including:\n- PayPal and its Braintree subsidiary\n- Adyen\n- Block (Square)\n- PayU\n- Razorpay\n- Flutterwave\n- Worldpay\n- Rapyd\n- Xendit\n- Checkout.com\n- Dwolla\n\n## Valuation History\n- **February 2026:** $159 billion in a tender offer for employees and shareholders\n- **2025:** $115 billion in secondary market transactions\n- **Earlier 2024:** $106.7 billion (passing previous peak of $95 billion in 2021)\n- **Earlier in 2024:** $91.5 billion\n- **2023:** $65 billion in an employee tender offer\n- **2023:** $50 billion following a $6.5 billion funding round\n- **April 2020:** $36 billion\n\n## Recent Acquisitions\nStripe has made several notable acquisitions, particularly in cryptocurrency and billing infrastructure:\n- **Bridge** (stablecoin platform) – October 2024 for $1.1 billion (Stripe’s largest acquisition to date)\n- **Lemon Squeezy** (Merchant of Record services) – July 2024\n- **Privy** (crypto wallet) – June 2025\n- **Orum** (fintech company) – July 2025\n- **Metronome** (usage-based billing platform) – December 2025/January 2026\n- **Valora** (mobile cryptocurrency wallet) – December 2025\n- **Okay** – May 2023\n- **BBPOS** – January 2022\n- **TaxJar** – April 2021\n- **Paystack** – October 2020\n\nEarlier acquisitions include Kickoff (2013), Runkit (2016), RethinkDB (2016), Indie Hackers (2017), Payable (2017), Index Systems (2018), and Touchtech Payments (2019).\n\n## CEO and Leadership\n- **CEO:** Patrick Collison\n- **Co-founder & Executive:** John Collison\n- **Other executives:** Patricia Walsh, Robert Mcintosh, Steffan Tomlinson, Carmel Galvin, and Dhivya Suryadevara\n\nNo leadership changes are noted in the provided context; the Collison brothers have continued to lead since founding.\n\n## Funding Rounds\n- **April 2024:** $694 million Series I\n- **2023:** $6.5 billion at a $50 billion valuation\n- **April 2020:** Funding at a $36 billion valuation\n\n## Latest News (2024–2026)\n- Stripe processed **$1.9 trillion** in payment volume.\n- Stripe launched an **AI billing tool** that tracks large language model (LLM) usage in real time.\n- Stripe’s **x402 integration** enables AI agents to send and receive stablecoin payments autonomously.\n- Stripe partnered with **AWS** to enable AI agent payments for content owners and publishers.\n- **Lloyds Bank** partnered with Stripe to launch “Lloyds Accept” for UK small businesses.\n- Stripe co-developed the **Agentic Commerce Protocol** with OpenAI, later pivoting to join Google’s UCP Tech Council.\n- In March 2026, the **U.S. Federal Trade Commission** issued a warning against Stripe (along with three other payment processors) regarding debanking practices.\n- Stripe has reportedly **weighed a potential acquisition of PayPal Holdings**.\n- Stripe continued expanding its cryptocurrency and stablecoin capabilities following the acquisitions of Bridge and Privy.\n\n## Notes\n- Stripe’s tender offers and secondary market activity have driven significant valuation increases, with the 2026 tender offer at $159 billion representing a more than 70% jump from the prior year.\n- Stripe remains a private company, with no IPO announced in the provided context.",
+  "facts": [
+    {
+      "claim": "Headcount",
+      "value": "Stripe is a global fintech company headquartered at 354 Oyster Point Blvd, South San Francisco, CA, with about 8,150 employees and operating in fintech, software and services, and internet and web services industries.",
+      "sourceUrl": "https://stripe.com/",
+      "sourceName": "Vad är fintech? Allt du behöver veta | Stripe",
+      "category": "overview"
+    },
+    {
+      "claim": "CEO",
+      "value": "The company was founded in 2010 by brothers Patrick Collison (CEO) and John Collison, who continue to lead the firm.",
+      "sourceUrl": "https://stripe.com/",
+      "sourceName": "Vad är fintech? Allt du behöver veta | Stripe",
+      "category": "people"
+    },
+    {
+      "claim": "Funding",
+      "value": "Major shareholders and investors include Sequoia Capital, Andreessen Horowitz, Goldman Sachs, Thrive Capital, Coatue, Silver Lake, and SeedFord Partners, as indicated by multiple facts about shareholders and funding rounds.",
+      "sourceUrl": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp500-nasdaq-02-27-2025/card/who-needs-an-ipo-stripe-s-valuation-rises-to-91-5-billion-in-employee-share-sale-deal-rmyU0StM4ZRZn6txca7D",
+      "sourceName": "wsj.com",
+      "category": "ownership"
+    },
+    {
+      "claim": "People",
+      "value": "Board members listed (Mark Carney, Christa Davies, Michael Moritz, Jonathan Chadwick, Luciana Lixandru, Kevin Kelly, John Collison, Patrick Collison, Diane Greene, Matt Huang) are derived from the incoming IS_BOARD_MEMBER_OF relationships.",
+      "sourceUrl": "https://stripe.com/",
+      "sourceName": "Vad är fintech? Allt du behöver veta | Stripe",
+      "category": "people"
+    },
+    {
+      "claim": "Competitors",
+      "value": "Key competitors such as PayPal (Braintree), Adyen, Block (Square), PayU, Razorpay, Flutterwave, Worldpay, Rapyd, Xendit, Checkout.com, and Dwolla are identified from industry competitor facts.",
+      "sourceUrl": "https://tracxn.com/d/companies/koranetwork/__RRpJQ4jtQq5NQWXUtmE91VoE13q7N2E8p4yVr-kVK7U",
+      "sourceName": "Technology & Data for Venture Capital, Corp Dev, Investment Banks",
+      "category": "overview"
+    },
+    {
+      "claim": "Valuation",
+      "value": "Valuation history shows $159 billion in February 2026 tender offer, $115 billion in 2025 secondary market, $106.7 billion in early 2024, $91.5 billion earlier 2024, $65 billion in 2023 employee tender, $50 billion after a $6.5 billion round, and $36 billion in April 2020, supported by valuation and funding facts.",
+      "sourceUrl": "https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html",
+      "sourceName": "finance.yahoo.com",
+      "category": "ownership"
+    },
+    {
+      "claim": "Acquisitions",
+      "value": "Recent acquisitions include Bridge (stablecoin platform, Oct 2024, $1.1 billion), Lemon Squeezy (July 2024), Privy (June 2025), Orum (July 2025), Metronome (Dec 2025/Jan 2026), Valora (Dec 2025), Okay (May 2023), BBPOS (Jan 2022), TaxJar (Apr 2021), Paystack (Oct 2020), and earlier deals like Kickoff, Runkit, RethinkDB, Indie Hackers, Payable, Index Systems, Touchtech Payments. These are drawn from acquisition listings.",
+      "sourceUrl": "https://backlinko.com/stripe-users",
+      "sourceName": "Backlinko: SEO, Content Marketing, & Link Building Strategies",
+      "category": "ownership"
+    },
+    {
+      "claim": "CEO",
+      "value": "CEO and leadership details (Patrick Collison as CEO, John Collison as co‑founder & executive, plus executives Patricia Walsh, Robert Mcintosh, Steffan Tomlinson, Carmel Galvin, Dhivya Suryadevara) come from the IS_EXECUTIVE_OF relationships.",
+      "sourceUrl": "https://stripe.com/",
+      "sourceName": "Vad är fintech? Allt du behöver veta | Stripe",
+      "category": "people"
+    },
+    {
+      "claim": "Valuation",
+      "value": "Funding rounds include a $694 million Series I in April 2024, a $6.5 billion round in 2023 at a $50 billion valuation, and the April 2020 round at a $36 billion valuation, as indicated by funding facts.",
+      "sourceUrl": "https://tracxn.com/d/companies/stripe/__uahG_IGnVgsUsOG-f8otYHLkOkliWg7YFhJ5ZkNIkpI/founders-and-board-of-directors",
+      "sourceName": "Technology & Data for Venture Capital, Corp Dev, Investment Banks",
+      "category": "ownership"
+    },
+    {
+      "claim": "Acquisitions",
+      "value": "Latest news items such as processing $1.9 trillion in payment volume, launching an AI billing tool, the x402 integration for stablecoin payments, partnership with AWS, Lloyds Bank partnership, Agentic Commerce Protocol work with OpenAI, FTC warning in March 2026, and potential PayPal acquisition are drawn from recent news facts.",
+      "sourceUrl": "https://tearsheet.co/payments/in-the-world-of-stripe-acquisitions-agentic-ai-and-stablecoins?newsest=",
+      "sourceName": "tearsheet.co",
+      "category": "ownership"
+    }
+  ],
+  "relationships": [
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Stripe, Inc."
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Patrick Collison"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "John Collison"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Sequoia Capital"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Andreessen Horowitz"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "GOLDMAN SACHS GROUP INC"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "THRIVE CAPITAL PARTNERS LIMITED"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "COATUE MANAGEMENT, L.L.C."
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Silver Lake Partners Limited"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "SeedFord Partners"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Mark Carney"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Christa Davies"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Michael Moritz"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Jonathan Chadwick"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Luciana Lixandru"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Kevin Kelly"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Diane Greene"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Matt Huang"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "PayPal Holdings, Inc."
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Braintree"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Adyen"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "BLOCK, INC."
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "PayU"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Razorpay"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Flutterwave"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Worldpay"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Rapyd"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Xendit"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "CHECKOUT"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Dwolla"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Bridge Network"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "LEMON SQUEEZY LIMITED"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Privy"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Orum Inc."
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Metronome"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Valora"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Okay"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "BBPOS"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "TaxJar"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Paystack"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Kickoff"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "RunKit"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "RethinkDB"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Indie Hackers"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "Payable"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Index Systems"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Touchtech Payments"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Patricia Walsh"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Robert Mcintosh"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Steffan Tomlinson"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Carmel Galvin"
+    },
+    {
+      "type": "Person",
+      "from": "Stripe",
+      "to": "Dhivya Suryadevara"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "AWS"
+    },
+    {
+      "type": "Company",
+      "from": "Stripe",
+      "to": "LLOYDS BANK PLC"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Federal Trade Commission"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "OpenAI"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "Google LLC"
+    },
+    {
+      "type": "Organization",
+      "from": "Stripe",
+      "to": "UCP Tech Council"
+    }
+  ],
+  "fetchedAt": "2026-06-20T08:45:15.049Z"
+}
