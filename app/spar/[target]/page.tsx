@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Vapi from "@vapi-ai/web";
 import type { TranscriptTurn } from "@/lib/types";
 
@@ -116,7 +117,15 @@ export default function SparPage({ params }: { params: Promise<{ target: string 
           )}
           {phase === "connecting" && <p className="text-muted text-[0.85rem]">Querying Cala.ai for {target}&apos;s entity network…</p>}
           {phase === "debriefing" && <p className="text-muted text-[0.85rem]">Scoring your answers against the sources…</p>}
-          {phase === "error" && <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>}
+          {phase === "error" && (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[0.85rem]" style={{ color: "var(--flag)" }}>{error}</p>
+              {/* Demo insurance: if the live call won't connect, jump to the precomputed debrief. */}
+              <Link href="/debrief/mock-stripe" className="btn-secondary">
+                Show sample debrief →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Live transcript rail */}

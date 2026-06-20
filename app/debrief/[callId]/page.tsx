@@ -78,12 +78,6 @@ export default async function DebriefPage({
           </div>
         </details>
       </div>
-
-      <footer className="bg-footer text-white">
-        <div className="container-page py-[3rem] text-[0.85rem] text-white/70">
-          Grounded in Cala.ai cited data · Voice by Vapi · Greenroom
-        </div>
-      </footer>
     </main>
   );
 }
