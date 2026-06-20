@@ -1,0 +1,90 @@
+{
+  "target": "Stripe",
+  "transcript": [
+    {
+      "role": "interviewer",
+      "text": "Thanks for joining. Pitch me Stripe — start with the basics."
+    },
+    {
+      "role": "candidate",
+      "text": "Sure. Stripe is a payments company founded in 2010 by the Collison brothers, Patrick and John."
+    },
+    {
+      "role": "interviewer",
+      "text": "Good. And how would you frame its scale for an investor?"
+    },
+    {
+      "role": "candidate",
+      "text": "It's still private, and last I checked it was valued around 65 billion dollars after a down round."
+    },
+    {
+      "role": "interviewer",
+      "text": "You sure about that number? Walk me through it."
+    },
+    {
+      "role": "candidate",
+      "text": "Yeah, roughly 65 billion. I think they also recently moved their headquarters to Dublin."
+    },
+    {
+      "role": "interviewer",
+      "text": "Interesting. Anything on recent M&A?"
+    },
+    {
+      "role": "candidate",
+      "text": "They acquired a metering company called Metronome to push into usage-based billing."
+    }
+  ],
+  "debrief": {
+    "claims": [
+      {
+        "quote": "Stripe is a payments company founded in 2010 by the Collison brothers, Patrick and John.",
+        "verdict": "verified",
+        "sourceUrl": "https://stripe.com/",
+        "correctValue": ""
+      },
+      {
+        "quote": "It's still private",
+        "verdict": "verified",
+        "sourceUrl": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp500-nasdaq-02-27-2025/card/who-needs-an-ipo-stripe-s-valuation-rises-to-91-5-billion-in-employee-share-sale-deal-rmyU0StM4ZRZn6txca7D",
+        "correctValue": ""
+      },
+      {
+        "quote": "last I checked it was valued around 65 billion dollars after a down round.",
+        "verdict": "flagged",
+        "sourceUrl": "https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html",
+        "correctValue": "Most recent valuation is $159 billion (Feb 2026 tender offer). $65 billion was a 2023 employee tender — not the latest."
+      },
+      {
+        "quote": "I think they also recently moved their headquarters to Dublin.",
+        "verdict": "flagged",
+        "sourceUrl": "https://stripe.com/",
+        "correctValue": "Headquarters is at 354 Oyster Point Blvd, South San Francisco, CA. No mention of Dublin."
+      },
+      {
+        "quote": "They acquired a metering company called Metronome to push into usage-based billing.",
+        "verdict": "verified",
+        "sourceUrl": "https://backlinko.com/stripe-users",
+        "correctValue": ""
+      }
+    ],
+    "flags": [
+      {
+        "quote": "last I checked it was valued around 65 billion dollars after a down round.",
+        "issue": "Stated $65B as current valuation; fact pack shows $159B (Feb 2026) as most recent. $65B was a 2023 employee tender, not the latest figure.",
+        "correctValue": "$159 billion (February 2026 tender offer)",
+        "sourceUrl": "https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html",
+        "severity": "high"
+      },
+      {
+        "quote": "I think they also recently moved their headquarters to Dublin.",
+        "issue": "Fact pack lists headquarters as South San Francisco, CA; no mention of Dublin.",
+        "correctValue": "354 Oyster Point Blvd, South San Francisco, CA",
+        "sourceUrl": "https://stripe.com/",
+        "severity": "medium"
+      }
+    ],
+    "verifiedCount": 3,
+    "totalClaims": 5,
+    "score": 45
+  }
+}

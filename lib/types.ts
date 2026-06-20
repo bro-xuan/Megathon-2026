@@ -47,6 +47,12 @@ export type ClaimCheck = {
   correctValue?: string;
 };
 
+/** One turn of the interview transcript (candidate vs. interviewer). */
+export type TranscriptTurn = {
+  role: 'candidate' | 'interviewer';
+  text: string;
+};
+
 /** The full post-call scorecard produced by the Claude debrief pass. */
 export type DebriefResult = {
   claims: ClaimCheck[];
