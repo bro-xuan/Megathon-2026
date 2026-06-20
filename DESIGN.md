@@ -90,8 +90,13 @@ illustrations — Cal's "show the product in the card" approach.
 
 - `Button` — primary: `--ink` fill, white text; secondary: white + `--border` hairline.
 - `nav-pill-group` — Cal's signature pill-radius wrapper; use for scenario/mode switching.
+- `BookingPicker` — Cal-style calendar + time-slot grid for "scheduling" the interview.
+- `ConfirmationCard` — "booked for [time]" confirmation with a "Join now" action.
 - `SourceChip` — value + outbound citation; `--verified` text/border. Used wherever a fact appears.
 - `FactCard` — grouped facts on `--surface`; source chips inline.
+- `InterviewerStage` — static-image "video" frame: avatar photo + name/title caption +
+  speaking-state indicator (the fake video-call surface; audio-only underneath).
+- `CallBar` — bottom call-control bar: `MicButton`, mute, end.
 - `MicButton` — push-to-talk with speaking state (neutral, no loud accent).
 - `TranscriptLine` — role-tagged line on `--surface-product`; optional `FlagChip`.
 - `FlagChip` — severity-colored; expands to `issue · correctValue · source`.
@@ -101,26 +106,37 @@ illustrations — Cal's "show the product in the card" approach.
 ## 8. Screens & flows
 
 ```
-Landing ──► Study ──► Spar ──► Debrief
-            (facts)   (voice)  (sourced flags + score)
+Landing ──► Schedule ──► Study ──► Spar ──► Debrief
+            (book slot)  (facts)  (video)  (sourced flags + score)
 ```
 
 ### 8.1 Landing
 - Cal Sans hero with the product one-liner; generous whitespace on white canvas. A single
   scenario card (**"IB / Finance Interview"**) on `--surface`; curated target picker as
-  prominent cards. CTA (black `--ink` button): **"Start →"**.
+  prominent cards. CTA (black `--ink` button): **"Book your interview →"**.
 
-### 8.2 Study
+### 8.2 Schedule — the booking (fake)
+- A **Cal.com-style booking screen** (fitting — our design language *is* Cal's): a
+  `BookingPicker` (calendar date + time-slot grid) to "schedule" the mock interview with the
+  chosen interviewer. On confirm, a `ConfirmationCard` ("Your interview with [name] is booked
+  for [time]") with a **"Join now →"** action. **Faked:** no real time-triggered backend —
+  "Join now" launches the call immediately; "scheduling" is product theater for realism.
+
+### 8.3 Study
 - **Fact-pack cards** grouped (Overview · People · Ownership/Funding · Recent activity) on
   `--surface`, each fact value in mono with a `SourceChip`. **Knowledge graph** (cut-able)
   on a white `--surface-product` panel with hairline border. CTA: **"Go to interview →"**.
 
-### 8.3 Spar
-- Minimal, white canvas. Centered `MicButton` (push-to-talk) with a quiet speaking
-  indicator. Live transcript on a `--surface-product` rail (muted, non-distracting). Single
-  **"End interview"** action. A small "grounded in N cited facts" note keeps the moat visible.
+### 8.4 Spar — the "video call"
+- Styled as a **video call**, though the medium is **audio-only**: the "video" is a
+  **static interviewer image** + call chrome (no camera, no real video stream, no phone/
+  Twilio). Layout: a large interviewer "video" frame (avatar photo, name/title caption,
+  quiet speaking indicator) on white canvas; an optional small self-tile. Bottom **call bar**
+  holds `MicButton` (push-to-talk), mute, and a single red **"End interview"** control. Live
+  transcript on a collapsible `--surface-product` side rail (muted, non-distracting). A small
+  "grounded in N cited facts" note keeps the moat visible.
 
-### 8.4 Debrief
+### 8.5 Debrief
 - **ScorePanel** at top (overall + Accuracy / Composure). Transcript on `--surface-product`
   with inline `FlagChip`s on bluffed lines → `issue · correctValue · source`. Correct claims
   get a quiet `--verified` tick. Summary line: "X bluffs caught, all sourced" — the punchline.

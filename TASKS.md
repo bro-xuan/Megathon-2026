@@ -61,6 +61,12 @@ Prove both external APIs work *before* building any UI.
 ## M5 — Polish + demo hardening (~2h)
 - [ ] Apply `DESIGN.md` tokens/typography; fluid `clamp()` root font verified on a wide
       display.
+- [ ] **"Video call" skin for Spar** — static interviewer image + call chrome
+      (`InterviewerStage` + `CallBar`). Cosmetic only; audio stays the browser web call.
+      No Twilio, no real video.
+- [ ] **Fake scheduling flow** — Cal-style booking screen (`BookingPicker` +
+      `ConfirmationCard`) that "books" a slot then **starts the call immediately** via
+      "Join now". No real time-triggered backend.
 - [ ] **Mock/fallback mode** — canned fact pack + recorded call + precomputed Debrief
       (network-off safe) so a venue/network failure can't kill the demo.
 - [ ] Deploy to Vercel; set env vars in the dashboard.
