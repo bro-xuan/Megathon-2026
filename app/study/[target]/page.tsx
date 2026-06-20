@@ -38,19 +38,21 @@ export default async function StudyPage({
         <Link href="/" className="label-eyebrow hover:text-ink w-fit">
           ← Greenroom
         </Link>
+        <span className="label-eyebrow">Prep material</span>
         <h1 className="font-display text-[clamp(1.8rem,3vw,3rem)] leading-tight">
-          What we know about {pack.target}
+          {pack.target}
         </h1>
         <p className="text-muted max-w-[48rem]">
-          Every fact below is grounded in Cala&apos;s cited data — click any chip to open the
-          source. This is the ground truth your interviewer is checking you against.
+          Study these before you go in. Every fact is grounded in Cala&apos;s cited data — click
+          any chip to open the source. In a grounded interview, this is exactly what the AI grills
+          you on and checks your answers against.
         </p>
         <div className="flex items-center gap-4 flex-wrap">
           <span className="label-eyebrow">
             {pack.facts.length} cited facts · {network.length} entities in the network
           </span>
-          <Link href={`/spar/${encodeURIComponent(pack.target)}`} className="btn-primary">
-            Go to interview →
+          <Link href="/spar/stock-pitch" className="btn-primary">
+            Spar with the Managing Director →
           </Link>
         </div>
       </header>

@@ -194,3 +194,20 @@ export async function readCachedPack(target: string): Promise<FactPack | null> {
   if (!existsSync(file)) return null;
   return JSON.parse(await readFile(file, 'utf8')) as FactPack;
 }
+
+/** Load every prep pack in the curated library (the companies the grounded tracks ground on). */
+export async function getPrepPacks(targets: readonly string[]): Promise<FactPack[]> {
+  return Promise.all(targets.map((t) => getFactPack(t)));
+}
+
+/** Combine multiple prep packs into one for the debrief reasoner (union of cited facts). */
+export function mergePacks(packs: FactPack[]): FactPack {
+  return {
+    target: packs.map((p) => p.target).join(' / '),
+    entityId: '',
+    summary: packs.map((p) => `${p.target}: ${p.summary}`).join('\n\n'),
+    facts: packs.flatMap((p) => p.facts),
+    relationships: packs.flatMap((p) => p.relationships),
+    fetchedAt: packs[0]?.fetchedAt ?? '',
+  };
+}

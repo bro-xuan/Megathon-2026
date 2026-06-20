@@ -49,3 +49,4 @@ next-env.d.ts
 
 # raw Cala probe dumps (debug artifacts; real packs live in data/factpacks/)
 /data/cala-raw
+.gstack/

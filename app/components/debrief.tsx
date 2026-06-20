@@ -1,4 +1,4 @@
-import type { ClaimCheck, DebriefResult, FactCheckFlag, TranscriptTurn } from "@/lib/types";
+import type { ClaimCheck, DebriefResult, FactCheckFlag, GeneralDebrief, TranscriptTurn } from "@/lib/types";
 import { SourceChip } from "@/app/components/facts";
 
 const SEVERITY_COLOR: Record<FactCheckFlag["severity"], string> = {
@@ -91,6 +91,50 @@ export function ClaimRow({ claim }: { claim: ClaimCheck }) {
         </div>
       </div>
     </li>
+  );
+}
+
+/** Delivery-coaching debrief for ungrounded tracks (no fact-check — strengths + fixes). */
+export function GeneralDebriefView({ debrief }: { debrief: GeneralDebrief }) {
+  return (
+    <div className="flex flex-col gap-[2.5rem]">
+      <section className="card-product flex items-center gap-[2.5rem]">
+        <div>
+          <div className="label-eyebrow">Delivery</div>
+          <div className="font-display text-[3rem] leading-none">{debrief.score}</div>
+          <div className="text-muted text-[0.8rem]">out of 100</div>
+        </div>
+        <div className="h-[3rem] w-px bg-border" />
+        <p className="text-[0.95rem] flex-1">{debrief.summary}</p>
+      </section>
+
+      <div className="grid gap-[1.5rem] md:grid-cols-2">
+        <section className="card-product">
+          <h2 className="font-display text-[1.2rem] mb-3" style={{ color: "var(--verified)" }}>
+            What worked
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {debrief.strengths.map((s, i) => (
+              <li key={i} className="text-[0.9rem] flex gap-2">
+                <span style={{ color: "var(--verified)" }} aria-hidden>✓</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className="card-product">
+          <h2 className="font-display text-[1.2rem] mb-3">Sharpen this</h2>
+          <ul className="flex flex-col gap-2">
+            {debrief.improvements.map((s, i) => (
+              <li key={i} className="text-[0.9rem] flex gap-2">
+                <span className="text-muted" aria-hidden>→</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
   );
 }
 

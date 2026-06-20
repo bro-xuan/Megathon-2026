@@ -8,7 +8,7 @@
 // returns empty content — see CLAUDE.md gotcha).
 
 import { z } from 'zod';
-import type { DebriefResult, FactPack, TranscriptTurn } from './types';
+import type { DebriefResult, FactPack, GeneralDebrief, TranscriptTurn } from './types';
 
 // ---- Shared validation schema ----
 const ClaimCheckZ = z.object({
@@ -126,7 +126,11 @@ function stripFences(text: string): string {
 
 export type DebriefProvider = 'claude' | 'glm';
 
+// Scoring provider. Explicit DEBRIEF_PROVIDER wins (we pin GLM-5.2 for the demo — see CLAUDE.md);
+// otherwise fall back to whichever key is present (Claude if ANTHROPIC_API_KEY, else GLM).
 export function debriefProvider(): DebriefProvider {
+  const pinned = process.env.DEBRIEF_PROVIDER?.toLowerCase();
+  if (pinned === 'glm' || pinned === 'claude') return pinned;
   return process.env.ANTHROPIC_API_KEY ? 'claude' : 'glm';
 }
 
@@ -177,9 +181,115 @@ async function glmDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise
   return finalize(JSON.parse(stripFences(content)));
 }
 
-/** Run the debrief pass with whichever reasoner is configured. */
+/** Run the (cited) debrief pass with whichever reasoner is configured. */
 export function buildDebrief(transcript: TranscriptTurn[], pack: FactPack): Promise<DebriefResult> {
   return debriefProvider() === 'claude'
     ? claudeDebrief(transcript, pack)
     : glmDebrief(transcript, pack);
+}
+
+// ---- General (ungrounded) debrief: delivery coaching, no fact-check ----------------------
+// Behavioral/technical tracks have no fact pack, so there are no bluffs to catch. We still
+// run a post-call pass, but it grades delivery + reasoning and returns coaching notes.
+
+const GeneralZ = z.object({
+  score: z.number(),
+  summary: z.string(),
+  strengths: z.array(z.string()),
+  improvements: z.array(z.string()),
+});
+
+const GENERAL_JSON_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    score: { type: 'integer' },
+    summary: { type: 'string' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improvements: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['score', 'summary', 'strengths', 'improvements'],
+} as const;
+
+const GENERAL_SHAPE = `Respond with ONLY a single JSON object, no markdown fences, matching exactly:
+{"score":number,"summary":string,"strengths":[string],"improvements":[string]}`;
+
+function generalSystem(trackTitle: string): string {
+  return `You are an experienced investment-banking interview coach. You receive the transcript of a mock "${trackTitle}" round. This round is about DELIVERY and REASONING, not company facts — there is no fact-check here.
+
+Assess the candidate's performance and return coaching:
+- score: 0-100 overall (structure, clarity, depth of reasoning, communication; be a fair but demanding MD).
+- summary: 1-2 sentences on how they did overall.
+- strengths: 2-4 specific things they did well, referencing what they actually said.
+- improvements: 2-4 specific, actionable fixes, referencing what they actually said.
+Be concrete; quote or paraphrase their words. Never invent claims they did not make.`;
+}
+
+function generalUser(transcript: TranscriptTurn[]): string {
+  const t = transcript
+    .map((x) => `${x.role === 'candidate' ? 'CANDIDATE' : 'INTERVIEWER'}: ${x.text}`)
+    .join('\n');
+  return `INTERVIEW TRANSCRIPT:\n${t}\n\nProduce the coaching review.`;
+}
+
+function finalizeGeneral(raw: unknown): GeneralDebrief {
+  const parsed = GeneralZ.parse(raw);
+  return {
+    mode: 'general',
+    score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+    summary: parsed.summary,
+    strengths: parsed.strengths,
+    improvements: parsed.improvements,
+  };
+}
+
+async function claudeGeneral(transcript: TranscriptTurn[], trackTitle: string): Promise<GeneralDebrief> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const client = new Anthropic();
+  const message = await client.messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 4000,
+    output_config: { format: { type: 'json_schema', schema: GENERAL_JSON_SCHEMA } },
+    system: generalSystem(trackTitle),
+    messages: [{ role: 'user', content: generalUser(transcript) }],
+  });
+  const text = message.content
+    .map((b) => ('text' in b && typeof b.text === 'string' ? b.text : ''))
+    .join('');
+  return finalizeGeneral(JSON.parse(stripFences(text)));
+}
+
+async function glmGeneral(transcript: TranscriptTurn[], trackTitle: string): Promise<GeneralDebrief> {
+  const key = process.env.GLM_API_KEY;
+  if (!key) throw new Error('No debrief key: set ANTHROPIC_API_KEY or GLM_API_KEY');
+  const res = await fetch('https://api.z.ai/api/coding/paas/v4/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: process.env.GLM_MODEL || 'glm-5.2',
+      stream: false,
+      max_tokens: 4000,
+      thinking: { type: 'disabled' },
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: `${generalSystem(trackTitle)}\n\n${GENERAL_SHAPE}` },
+        { role: 'user', content: generalUser(transcript) },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`GLM ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content ?? '';
+  if (!content) throw new Error('GLM returned empty content');
+  return finalizeGeneral(JSON.parse(stripFences(content)));
+}
+
+/** Run the general (delivery-coaching) debrief for an ungrounded track. */
+export function buildGeneralDebrief(
+  transcript: TranscriptTurn[],
+  trackTitle: string,
+): Promise<GeneralDebrief> {
+  return debriefProvider() === 'claude'
+    ? claudeGeneral(transcript, trackTitle)
+    : glmGeneral(transcript, trackTitle);
 }

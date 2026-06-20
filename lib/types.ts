@@ -53,11 +53,24 @@ export type TranscriptTurn = {
   text: string;
 };
 
-/** The full post-call scorecard produced by the Claude debrief pass. */
+/** The full post-call scorecard produced by the Claude debrief pass (GROUNDED tracks). */
 export type DebriefResult = {
+  mode?: 'cited'; // absent = cited (back-compat with fixtures)
   claims: ClaimCheck[];
   flags: FactCheckFlag[];
   verifiedCount: number;
   totalClaims: number;
   score: number; // 0–100
 };
+
+/** Delivery-coaching debrief for UNGROUNDED tracks (behavioral/technical) — no fact-check. */
+export type GeneralDebrief = {
+  mode: 'general';
+  score: number; // 0–100 delivery
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+};
+
+/** Either debrief shape — discriminated by `mode`. */
+export type AnyDebrief = DebriefResult | GeneralDebrief;

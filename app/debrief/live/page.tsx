@@ -2,13 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ClaimRow, FlagCard, ScorePanel, TranscriptView } from "@/app/components/debrief";
-import type { DebriefResult, TranscriptTurn } from "@/lib/types";
+import {
+  ClaimRow,
+  FlagCard,
+  GeneralDebriefView,
+  ScorePanel,
+  TranscriptView,
+} from "@/app/components/debrief";
+import type { AnyDebrief, DebriefResult, TranscriptTurn } from "@/lib/types";
 
-type Stashed = { target: string; transcript: TranscriptTurn[]; debrief: DebriefResult };
+type Stashed = {
+  label: string;
+  grounded: boolean;
+  transcript: TranscriptTurn[];
+  debrief: AnyDebrief;
+};
 
 // Live debrief: renders the result the Spar page stashed in sessionStorage after a real call.
-// (The offline demo path is the server-rendered /debrief/mock-stripe.)
+// Grounded tracks → cited scorecard; ungrounded → delivery coaching. (The offline demo path is
+// the server-rendered /debrief/mock-stripe.)
 export default function LiveDebriefPage() {
   const [data, setData] = useState<Stashed | null>(null);
   const [missing, setMissing] = useState(false);
@@ -31,41 +43,35 @@ export default function LiveDebriefPage() {
   }
   if (!data) return <main className="container-page py-[6rem]" />;
 
-  const { target, transcript, debrief } = data;
+  const { label, transcript, debrief } = data;
+  const isGeneral = debrief.mode === "general";
+
   return (
     <main className="flex-1">
       <div className="container-page py-[6rem] flex flex-col gap-[2.5rem]">
         <header className="flex flex-col gap-3">
           <Link href="/" className="label-eyebrow hover:text-ink w-fit">← Greenroom</Link>
           <h1 className="font-display text-[clamp(1.8rem,3vw,3rem)] leading-tight">
-            Debrief — {target} interview
+            Debrief — {label} round
           </h1>
           <p className="text-muted">
-            {debrief.flags.length} bluff{debrief.flags.length === 1 ? "" : "s"} caught, all
-            sourced. Every factual claim you made was checked against Cala&apos;s cited data.
+            {isGeneral ? (
+              "Delivery review for this round — no fact-check (grounded tracks catch bluffs against cited data)."
+            ) : (
+              <>
+                {(debrief as DebriefResult).flags.length} bluff
+                {(debrief as DebriefResult).flags.length === 1 ? "" : "s"} caught, all sourced.
+                Every factual claim you made was checked against Cala&apos;s cited data.
+              </>
+            )}
           </p>
         </header>
 
-        <ScorePanel debrief={debrief} />
-
-        {debrief.flags.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <h2 className="font-display text-[1.3rem]">Bluffs caught</h2>
-            <div className="grid gap-[1rem]">
-              {debrief.flags.map((f, i) => <FlagCard key={i} flag={f} />)}
-            </div>
-          </section>
+        {isGeneral ? (
+          <GeneralDebriefView debrief={debrief} />
+        ) : (
+          <CitedDebrief debrief={debrief as DebriefResult} />
         )}
-
-        <section className="flex flex-col gap-2">
-          <h2 className="font-display text-[1.3rem]">Every claim, checked</h2>
-          <p className="text-muted text-[0.85rem]">
-            {debrief.verifiedCount} of {debrief.totalClaims} verified against a source.
-          </p>
-          <ul className="card-product mt-1">
-            {debrief.claims.map((c, i) => <ClaimRow key={i} claim={c} />)}
-          </ul>
-        </section>
 
         {transcript.length > 0 && (
           <details className="card">
@@ -75,5 +81,32 @@ export default function LiveDebriefPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function CitedDebrief({ debrief }: { debrief: DebriefResult }) {
+  return (
+    <>
+      <ScorePanel debrief={debrief} />
+
+      {debrief.flags.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-[1.3rem]">Bluffs caught</h2>
+          <div className="grid gap-[1rem]">
+            {debrief.flags.map((f, i) => <FlagCard key={i} flag={f} />)}
+          </div>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-display text-[1.3rem]">Every claim, checked</h2>
+        <p className="text-muted text-[0.85rem]">
+          {debrief.verifiedCount} of {debrief.totalClaims} verified against a source.
+        </p>
+        <ul className="card-product mt-1">
+          {debrief.claims.map((c, i) => <ClaimRow key={i} claim={c} />)}
+        </ul>
+      </section>
+    </>
   );
 }

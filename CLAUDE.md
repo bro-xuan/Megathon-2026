@@ -52,6 +52,30 @@ Client: `NEXT_PUBLIC_VAPI_PUBLIC_KEY`.
 
 ## Decision log & API quirks (append newest at top)
 
+**UX reframe: interview-TYPE front door + company-as-prep-material (2026-06-20):** Build clean.
+Pivoted the framing toward OphyAI's model (per user). **(1) Positioning** is now vision-first:
+"Rehearse any high-pressure conversation" (high-pressure beats high-stakes/high-stress — visceral
+without pulling the story toward anxiety/confidence, which is OphyAI's lane); IB mock interview is
+the entry mode. **(2) The interview is keyed on TRACK, not company.** New `lib/tracks.ts`: two
+**grounded** tracks (`stock-pitch`, `markets`) are the hero (Cala load-bearing — cited bluff-catch
++ cited debrief), two **ungrounded** tracks (`behavioral`, `technical`) are table-stakes "any AI
+does this," shown secondary. Differentiation vs OphyAI = **cited knowledge-graph fact-checking
+(catch bluffs + show the receipt) vs delivery coaching** — OphyAI grounds in your résumé and can't
+tell you you're factually wrong. **(3) Companies (Stripe/OpenAI) are PREP MATERIAL**, not interview
+targets: grounded tracks inject the WHOLE prep library (`PREP_TARGETS`, both packs merged → 19
+cited facts) and let the candidate pick which to pitch; `/study/[target]` reframed "What we know
+about X" → "Prep material: X". **Routing:** `/spar/[target]`→`/spar/[track]`; `/api/assistant?target=`
+→`?track=`; `/api/debrief` now takes `{track,transcript}` and routes grounded→cited M3 scorecard
+(merged pack) vs ungrounded→new `buildGeneralDebrief` (delivery score + strengths/improvements,
+`GeneralDebrief` type + `GeneralDebriefView`). Live debrief stash is now `{label,grounded,...}` and
+renders both modes by `debrief.mode`. `mock-stripe` insurance path untouched. **Scorer = GLM-5.2,
+pinned:** new `DEBRIEF_PROVIDER` env override (`glm`|`claude`) wins over key-based dispatch so a
+future Anthropic key can't silently flip scoring — set `DEBRIEF_PROVIDER=glm` in `.env` (env files
+are permission-locked, so add it by hand; GLM is the fallback anyway with no Anthropic key). New
+GLM general path verified end-to-end (`scripts/test-debrief-general.ts`: 72/100 + strengths/fixes,
+caught the firing-level weakness + unanswered "why now"); cited GLM path already verified. Browser
+voice call + Vercel deploy still pending.
+
 **M5 polish + Cala "too complex" guard fixed (2026-06-20):** Production `next build` clean (11
 routes, TS passes). (1) **Cala rejects over-long compound `knowledge_search` queries** for some
 entities with a degenerate summary `"This question is too complex to answer fully…"` and **0
