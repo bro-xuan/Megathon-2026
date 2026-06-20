@@ -11,6 +11,7 @@ import path from 'node:path';
 import { getPrepPacks } from '@/lib/factpack';
 import { getPersona } from '@/lib/persona';
 import { buildAssistant, buildPersonaAssistant } from '@/lib/vapi-assistant';
+import { PERSONA_VOICE } from '@/lib/voice';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
 import type { FactPack } from '@/lib/types';
 
@@ -61,7 +62,17 @@ export async function GET(request: Request) {
       if (!profile) return Response.json({ error: 'Unknown ?persona=' }, { status: 400 });
       const base = getTrack(profile.baseTrack);
       const packs = base?.grounded ? await getPrepPacks(PREP_TARGETS) : [];
-      const assistant = buildPersonaAssistant(profile, packs, { candidateName, voiceId });
+      // Voice precedence. The ElevenLabs SOUNDALIKE (the persona's own voiceId, or our curated
+      // PERSONA_VOICE pin, else the global default) is used ONLY when ElevenLabs is enabled
+      // (VAPI_USE_ELEVENLABS=1) — which signals the 11labs provider credential is registered in
+      // Vapi. When off, voiceId stays undefined and the assistant falls back to a Deepgram Aura-2
+      // voice (Vapi-managed, no credential needed) — for pinned personas, a fitting one (see
+      // PERSONA_AURA in lib/voice.ts). This way the demo never hard-fails on a missing credential:
+      // flip the flag once the credential lands and the soundalike auto-engages, no code change.
+      const personaVoiceId = useEleven
+        ? profile.voiceId ?? PERSONA_VOICE[profile.slug] ?? voiceId
+        : undefined;
+      const assistant = buildPersonaAssistant(profile, packs, { candidateName, voiceId: personaVoiceId });
       const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
       return Response.json({ assistant, assistantId: undefined, factCount, facts: slimFacts(packs) });
     }

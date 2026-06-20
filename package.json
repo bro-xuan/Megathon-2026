@@ -10,7 +10,8 @@
     "test:cala": "tsx --env-file=.env scripts/test-cala.ts",
     "build:packs": "tsx --env-file=.env scripts/build-packs.ts",
     "distill": "tsx --env-file=.env scripts/distill-persona.ts",
-    "sync:vapi": "tsx --env-file=.env scripts/sync-vapi-assistants.ts"
+    "sync:vapi": "tsx --env-file=.env scripts/sync-vapi-assistants.ts",
+    "setup:11labs": "tsx --env-file=.env scripts/setup-vapi-elevenlabs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",

@@ -26,6 +26,20 @@ export const AURA_POOL: { voiceId: string; label: string }[] = [
   { voiceId: 'hermes', label: 'Hermes — expressive, engaging (M)' },
 ];
 
+/**
+ * ElevenLabs voice pinned to a specific distilled persona (slug → 11labs voiceId). Lets a marquee
+ * persona use a hand-picked SOUNDALIKE instead of the generic default — e.g. our pre-distilled Elon
+ * Musk demo persona reads in a measured, mid-pitch male voice rather than the shared default. This
+ * is an AI approximation, not a clone of the real person's voice (see the dossier disclaimer).
+ * Survives re-distillation because it lives in code, not in the cached persona JSON. Only honored
+ * when ElevenLabs is enabled (VAPI_USE_ELEVENLABS=1); every other persona falls through to Aura-2.
+ */
+export const PERSONA_VOICE: Record<string, string> = {
+  // Antoni — well-rounded, mid-pitch American male (ElevenLabs premade). Swap for a licensed clone
+  // by editing this id, or set `voiceId` on the persona JSON to override per-profile.
+  'elon-musk': 'ErXwobaYiN019PkySvjV',
+};
+
 /** Stable string hash (djb2) so the same seed always maps to the same voice. */
 function hash(s: string): number {
   let h = 5381;
@@ -44,6 +58,16 @@ const TRACK_VOICE: Record<string, string> = {
 };
 
 /**
+ * Aura-2 voice pinned to a specific persona slug, used as the NO-credential fallback (when
+ * ElevenLabs is off, so the persona's PERSONA_VOICE soundalike isn't available). Lets a pinned
+ * persona keep a gender/character-appropriate voice instead of a random hash pick — e.g. our Elon
+ * Musk demo reads in a confident male voice rather than possibly landing on a female one.
+ */
+const PERSONA_AURA: Record<string, string> = {
+  'elon-musk': 'orpheus', // M — professional, confident (fallback until the 11labs soundalike is live)
+};
+
+/**
  * Pick the interviewer's live-call voice.
  * - `elevenVoiceId` (server passes it only when ElevenLabs is enabled) → ElevenLabs Turbo v2.5.
  * - a known track id → its pinned Aura-2 voice (TRACK_VOICE).
@@ -55,7 +79,7 @@ export function pickInterviewerVoice(seed: string, elevenVoiceId?: string): Vapi
     // eleven_turbo_v2_5: lowest-latency ElevenLabs model — keeps live turns snappy.
     return { provider: '11labs', voiceId: elevenVoiceId, model: 'eleven_turbo_v2_5' };
   }
-  const pinned = TRACK_VOICE[seed];
+  const pinned = TRACK_VOICE[seed] ?? PERSONA_AURA[seed];
   const voiceId = pinned ?? AURA_POOL[hash(seed) % AURA_POOL.length].voiceId;
   return { provider: 'deepgram', voiceId, model: 'aura-2' };
 }

@@ -144,8 +144,9 @@ export default async function PersonaDossier({ params }: { params: Promise<{ slu
       )}
 
       <p className="text-muted text-[0.75rem] max-w-[44rem] border-t border-border pt-4">
-        Style is an approximation reconstructed from public material — not the actual person.
-        Distilled {new Date(p.distilledAt).toLocaleDateString()}.
+        AI approximation for interview practice. Voice and style are reconstructed from public
+        material — this is a synthetic soundalike, not a recording or voice clone of the actual
+        person. Distilled {new Date(p.distilledAt).toLocaleDateString()}.
       </p>
     </main>
   );

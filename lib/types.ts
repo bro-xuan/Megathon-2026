@@ -115,4 +115,8 @@ export type PersonaProfile = {
   knowledge: FactPack; // cited facts about the person / their firm / their views (Cala)
   sources: { name: string; url: string }[]; // every source the distillation drew on
   distilledAt: string; // ISO timestamp
+  // Optional ElevenLabs voiceId pinned to THIS person — a hand-picked soundalike (or a clone you
+  // own the rights to) so a marquee persona doesn't share the generic default voice. Only applied
+  // when ElevenLabs is enabled; otherwise the deterministic Aura-2 pool is used. See lib/voice.ts.
+  voiceId?: string;
 };
