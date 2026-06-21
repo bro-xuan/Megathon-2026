@@ -1,7 +1,11 @@
 # CLAUDE.md — Greenroom
 
-**Greenroom** — voice mock-interviewer grounded in **cited real-company data**; catches you
-when you bluff a fact. Megathon 2026 hackathon, targeting **Cala.ai** + **Vapi** prizes.
+**Greenroom** — a voice-native room to **practice any hard conversation** out loud, against
+someone who pushes back. The goal is to walk into the high-stakes conversation ready: it plays
+the person across the table, and **where facts matter** it's grounded in **cited sources** (a
+filing, a paper, the record) so it catches you when you bluff, then a post-call debrief scores
+how you carried it. Bluff-catching is the moat, not the whole point; **mock interview is one
+category, not the product.** Megathon 2026 hackathon, targeting **Cala.ai** + **Vapi** prizes.
 Also read `PRD.md` (what/why), `DESIGN.md` (UI), `TASKS.md` (next). Log new decisions/quirks
 at the bottom.
 

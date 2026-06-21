@@ -54,7 +54,7 @@ export default async function DebriefPage({
           </h1>
           <p className="text-muted text-[1.02rem] max-w-[44rem]">
             <strong className="text-ink">{debrief.flags.length} bluff{debrief.flags.length === 1 ? "" : "s"} caught</strong>, all
-            sourced. Every factual claim you made was checked against Cala&apos;s cited data.
+            sourced. Every factual claim you made was checked against Cala&apos;s cited sources.
           </p>
         </header>
 

@@ -1,7 +1,8 @@
 # Greenroom — Product Requirements Document
 
-> A voice-native rehearsal room for **any hard conversation** — grounded in real, cited data
-> where facts matter, so it catches your bluffs when you practice.
+> A voice-native room to practice **any hard conversation** out loud, against someone who
+> pushes back. Grounded in cited sources where facts matter, scored when you're done, so you
+> walk in ready. (Catching bluffs is one capability, the cited moat, not the whole goal.)
 
 **Event:** Megathon 2026 · **Build window:** ~1.5 days · **Sponsors targeted:** Cala.ai
 (data moat) + Vapi (voice). This is the single source of truth — vision *and* buildable spec.

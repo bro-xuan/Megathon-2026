@@ -12,9 +12,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Greenroom — grounded mock interviews",
+  title: "Greenroom: practice any hard conversation",
   description:
-    "A voice-native mock interviewer for high-stakes finance, grounded in cited real-company data. It catches your bluffs.",
+    "A voice-native room to rehearse the conversations you dread, out loud, against someone who pushes back. Grounded in cited sources where facts matter, scored when you're done.",
 };
 
 export default function RootLayout({
@@ -36,7 +36,7 @@ export default function RootLayout({
               <span className="font-display text-[1.05rem] tracking-tight">Greenroom</span>
             </Link>
             <div className="flex items-center gap-4 text-[0.8rem]">
-              <span className="badge-live hidden sm:inline-flex">grounded in cited data</span>
+              <span className="badge-live hidden sm:inline-flex">grounded in cited sources</span>
               <Link
                 href="/debrief/mock-stripe"
                 className="text-muted hover:text-ink transition-colors font-medium"
@@ -57,7 +57,7 @@ export default function RootLayout({
                   Practice the conversation before it counts.
                 </span>
                 <span className="text-white/55 text-[0.85rem]">
-                  Voice-native rehearsal, grounded in cited data.
+                  Voice-native rehearsal, grounded in cited sources.
                 </span>
               </div>
               <Link href="/start" className="btn-accent text-[0.9rem]">
@@ -66,7 +66,7 @@ export default function RootLayout({
             </div>
             <div className="border-t border-white/10 pt-5 text-[0.78rem] text-white/45 flex items-center justify-between gap-4 flex-wrap">
               <span>
-                Grounded in <strong className="text-white/80">Cala.ai</strong> cited data · Voice by{" "}
+                Grounded in <strong className="text-white/80">Cala.ai</strong> cited sources · Voice by{" "}
                 <strong className="text-white/80">Vapi</strong>
               </span>
               <Link href="/debrief/mock-stripe" className="text-white/40 hover:text-white/90 transition-colors">

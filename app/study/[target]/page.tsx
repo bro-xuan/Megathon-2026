@@ -49,7 +49,7 @@ export default async function StudyPage({
             </h1>
           </div>
           <p className="text-muted max-w-[48rem] text-[1.02rem] leading-relaxed">
-            Study these before you go in. Every fact is grounded in Cala&apos;s cited data — click
+            Study these before you go in. Every fact is grounded in Cala&apos;s cited sources — click
             any chip to open the source. In a grounded interview, this is exactly what the AI grills
             you on and checks your answers against.
           </p>

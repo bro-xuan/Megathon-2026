@@ -65,7 +65,7 @@ export default function LiveDebriefPage() {
               <>
                 {(debrief as DebriefResult).flags.length} bluff
                 {(debrief as DebriefResult).flags.length === 1 ? "" : "s"} caught, all sourced.
-                Every factual claim you made was checked against Cala&apos;s cited data.
+                Every factual claim you made was checked against Cala&apos;s cited sources.
               </>
             )}
           </p>
