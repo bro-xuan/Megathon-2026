@@ -1,0 +1,43 @@
+{
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "totalFrames": 2289,
+  "scenes": [
+    {
+      "id": "problem",
+      "audio": "audio/problem.mp3",
+      "audioSec": 16.744444,
+      "audioStartFrame": 15,
+      "durationInFrames": 556
+    },
+    {
+      "id": "intro",
+      "audio": "audio/intro.mp3",
+      "audioSec": 24.698095,
+      "audioStartFrame": 12,
+      "durationInFrames": 783
+    },
+    {
+      "id": "demo",
+      "audio": "audio/demo.mp3",
+      "audioSec": 8.94254,
+      "audioStartFrame": 12,
+      "durationInFrames": 334
+    },
+    {
+      "id": "debrief",
+      "audio": "audio/debrief.mp3",
+      "audioSec": 12.227438,
+      "audioStartFrame": 12,
+      "durationInFrames": 418
+    },
+    {
+      "id": "close",
+      "audio": "audio/close.mp3",
+      "audioSec": 4.395964,
+      "audioStartFrame": 12,
+      "durationInFrames": 198
+    }
+  ]
+}
