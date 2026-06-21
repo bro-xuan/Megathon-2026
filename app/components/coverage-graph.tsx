@@ -81,8 +81,8 @@ export function CoverageGraph({ graph }: { graph: CoverageGraph }) {
       <div>
         <div className="label-eyebrow">Coverage map</div>
         <p className="text-muted text-[0.85rem] mt-1">
-          Cala&apos;s knowledge graph, lit by what you said — green where you were precise, red where you
-          bluffed. Every lit node is itemized on the right.
+          The fact topics you touched in Cala&apos;s graph — green where you were precise, red where you
+          bluffed, dim where you never went. Itemized on the right.
         </p>
       </div>
 
@@ -347,8 +347,8 @@ export function CoverageGraph({ graph }: { graph: CoverageGraph }) {
         <span className="text-border">·</span>
         <Stat n={graph.stats.untouched} color="var(--muted)" label="untouched" />
         <span className="text-muted text-[0.78rem] ml-auto">
-          {graph.nodes.filter((n) => n.kind === "entity").length} related entities ·{" "}
           {graph.nodes.filter((n) => n.kind === "fact").length} fact topics
+          {graph.hiddenCount > 0 && <> · {graph.hiddenCount} more entities in Cala&apos;s graph untouched</>}
         </span>
         {!hasNetwork && (
           <span className="text-muted text-[0.78rem]">Relationship network unavailable.</span>

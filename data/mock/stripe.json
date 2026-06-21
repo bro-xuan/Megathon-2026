@@ -94,6 +94,13 @@
     "verifiedCount": 3,
     "totalClaims": 5,
     "score": 45,
+    "dimensions": [
+      { "key": "grounding", "label": "Grounding", "score": 45, "note": "3/5 claims verified · 2 bluffs caught" },
+      { "key": "technical", "label": "Technical depth", "score": 64, "note": "Solid on the fundamentals — founders, private status, the Metronome acquisition — but the valuation framing was a year stale." },
+      { "key": "communication", "label": "Communication", "score": 72, "note": "Clear and direct; answered the question without rambling." },
+      { "key": "composure", "label": "Composure", "score": 34, "note": "Doubled down on $65B when the MD pushed back instead of reconsidering — the moment that sinks the round." },
+      { "key": "structure", "label": "Structure", "score": 66, "note": "Sensible arc: basics, then scale, then M&A — easy for the MD to follow." }
+    ],
     "composureNote": "The MD gave you an opening — “you sure about that number?” — and you repeated $65B instead of reconsidering. Doubling down on a stale figure reads worse than the wrong number itself. The Dublin-HQ slip went unchallenged this round, but it's exactly the careless aside that ends a real pitch."
   }
 }

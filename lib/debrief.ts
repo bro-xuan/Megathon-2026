@@ -8,8 +8,9 @@
 // returns empty content — see CLAUDE.md gotcha).
 
 import { z } from 'zod';
-import type { DebriefResult, FactPack, GeneralDebrief, TranscriptTurn } from './types';
+import type { Dimension, DebriefResult, FactPack, GeneralDebrief, TranscriptTurn } from './types';
 import { entityEntries, factEntries, nodeIdForCompany } from './coverage-graph';
+import { DIM_LABEL } from './scorecard';
 
 // ---- Shared validation schema ----
 const ClaimCheckZ = z.object({
@@ -28,12 +29,20 @@ const FlagZ = z.object({
   recovery: z.enum(['recovered', 'doubled-down', 'not-challenged']).default('not-challenged'),
   nodeId: z.string().default(''),
 });
+const DimZ = z.object({ score: z.number(), note: z.string().default('') });
+const DimsZ = z.object({
+  technical: DimZ,
+  communication: DimZ,
+  composure: DimZ,
+  structure: DimZ,
+});
 const DebriefZ = z.object({
   claims: z.array(ClaimCheckZ),
   flags: z.array(FlagZ),
   verifiedCount: z.number().default(0),
   totalClaims: z.number().default(0),
   score: z.number(),
+  dimensions: DimsZ.optional(),
   composureNote: z.string().default(''),
 });
 
@@ -51,10 +60,19 @@ Rules:
 - recovery (on each flag): what the candidate did once this wrong claim was on the table — the most important behavioural signal. Look at the interviewer turns AFTER the claim. "recovered" = the interviewer pushed back / questioned this specific claim AND the candidate then corrected it, retracted it, hedged, or acknowledged the error. "doubled-down" = the interviewer pushed back AND the candidate repeated, defended, or insisted on the wrong claim anyway. "not-challenged" = the interviewer never tested this specific claim, so it slipped by unexamined. Judge ONLY from the transcript; do not assume a challenge that is not there.
 - nodeId: the single best-matching graph-node id for the claim, copied VERBATIM from the [brackets] in the fact pack — the fact topic the claim is about, or a related entity the candidate named (e.g. an investor, board member, acquisition, competitor). If the claim is about the company itself, use that company's id. If nothing in the pack matches, set nodeId to "". Set the same nodeId on the matching "flags" entry.
 - verifiedCount = number of "verified" claims; totalClaims = claims.length; score = 0-100 accuracy (start at 100, subtract heavily for high-severity flags, lightly for medium/low; unverifiable claims are neutral).
-- composureNote: one or two plain sentences on how the candidate handled BEING CAUGHT OUT — the reveal that matters more than the error itself. Reward recoveries (owning a mistake when pushed) and call out double-downs (insisting on a wrong figure under pressure), which read worse than the original slip. Note any high-severity bluff that went unchallenged as something a real interviewer would have caught. If no bluffs were challenged at all, say the candidate's recovery was never tested this round. Reference what actually happened in the transcript; never invent a challenge.`;
+- composureNote: one or two plain sentences on how the candidate handled BEING CAUGHT OUT — the reveal that matters more than the error itself. Reward recoveries (owning a mistake when pushed) and call out double-downs (insisting on a wrong figure under pressure), which read worse than the original slip. Note any high-severity bluff that went unchallenged as something a real interviewer would have caught. If no bluffs were challenged at all, say the candidate's recovery was never tested this round. Reference what actually happened in the transcript; never invent a challenge.
+- dimensions: score four capabilities 0-100, each with a one-line "note" that quotes or paraphrases the transcript (be a fair but demanding MD; do NOT score factual accuracy here — that is handled separately). (1) technical = depth and correctness of the candidate's reasoning and domain knowledge (frameworks, numbers, how a banker thinks); (2) communication = clarity, concision, and signal-to-noise of delivery; (3) composure = how they held up under pressure and pushback — anchor this to the recovery signals above (doubling down on a wrong figure should score LOW, owning a mistake should score HIGHER, a clean round with no pressure tested should sit mid-to-high); (4) structure = logical flow, framing, and ordering of the pitch. Ground every note in what was actually said.`;
 
 const SHAPE = `Respond with ONLY a single JSON object, no markdown fences, matching exactly:
-{"claims":[{"quote":string,"verdict":"verified"|"flagged"|"unverifiable","sourceUrl":string,"correctValue":string,"nodeId":string}],"flags":[{"quote":string,"issue":string,"correctValue":string,"sourceUrl":string,"severity":"low"|"medium"|"high","recovery":"recovered"|"doubled-down"|"not-challenged","nodeId":string}],"verifiedCount":number,"totalClaims":number,"score":number,"composureNote":string}`;
+{"claims":[{"quote":string,"verdict":"verified"|"flagged"|"unverifiable","sourceUrl":string,"correctValue":string,"nodeId":string}],"flags":[{"quote":string,"issue":string,"correctValue":string,"sourceUrl":string,"severity":"low"|"medium"|"high","recovery":"recovered"|"doubled-down"|"not-challenged","nodeId":string}],"verifiedCount":number,"totalClaims":number,"score":number,"dimensions":{"technical":{"score":number,"note":string},"communication":{"score":number,"note":string},"composure":{"score":number,"note":string},"structure":{"score":number,"note":string}},"composureNote":string}`;
+
+// One capability dimension in the structured output: a 0-100 score + a one-line note.
+const DIM_PROP_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  properties: { score: { type: 'integer' }, note: { type: 'string' } },
+  required: ['score', 'note'],
+} as const;
 
 // Structured-output JSON schema (Claude path). Every object: additionalProperties:false, all
 // properties required (optional fields use "" sentinel).
@@ -97,9 +115,20 @@ const DEBRIEF_JSON_SCHEMA = {
     verifiedCount: { type: 'integer' },
     totalClaims: { type: 'integer' },
     score: { type: 'integer' },
+    dimensions: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        technical: DIM_PROP_SCHEMA,
+        communication: DIM_PROP_SCHEMA,
+        composure: DIM_PROP_SCHEMA,
+        structure: DIM_PROP_SCHEMA,
+      },
+      required: ['technical', 'communication', 'composure', 'structure'],
+    },
     composureNote: { type: 'string' },
   },
-  required: ['claims', 'flags', 'verifiedCount', 'totalClaims', 'score', 'composureNote'],
+  required: ['claims', 'flags', 'verifiedCount', 'totalClaims', 'score', 'dimensions', 'composureNote'],
 } as const;
 
 // The ground-truth fact pack AND the node-id catalog in one block: every fact topic and
@@ -126,15 +155,40 @@ function userPrompt(transcript: TranscriptTurn[], packs: FactPack[]): string {
   return `${packForPrompt(packs)}\n\n---\n\nINTERVIEW TRANSCRIPT:\n${t}\n\nProduce the scorecard.`;
 }
 
+const clampScore = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+
+// The reasoner sometimes copies the node id WITH its surrounding [brackets] from the prompt
+// catalog (e.g. "[fact:stripe:valuation]"). Strip them so claim→graph-node resolution matches.
+const stripBrackets = (s: string) => s.replace(/^\[+/, '').replace(/\]+$/, '').trim();
+
 function finalize(raw: unknown): DebriefResult {
   const parsed = DebriefZ.parse(raw); // claims/flags now carry nodeId (default "") → passed through
+  parsed.claims.forEach((c) => (c.nodeId = stripBrackets(c.nodeId)));
+  parsed.flags.forEach((f) => (f.nodeId = stripBrackets(f.nodeId)));
   const verifiedCount = parsed.claims.filter((c) => c.verdict === 'verified').length;
+  const totalClaims = parsed.claims.length;
+  const score = clampScore(parsed.score);
+  const flagCount = parsed.flags.length;
+  // The grounding dimension IS the fact-check result (computed, not the model's opinion); the
+  // other four come from the reasoner. If the model omitted them, fall back to neutral mids.
+  const d = parsed.dimensions;
+  const groundingNote = totalClaims
+    ? `${verifiedCount}/${totalClaims} claims verified · ${flagCount} bluff${flagCount === 1 ? '' : 's'} caught`
+    : 'No factual claims to check this round';
+  const dimensions: Dimension[] = [
+    { key: 'grounding', label: DIM_LABEL.grounding, score, note: groundingNote },
+    { key: 'technical', label: DIM_LABEL.technical, score: clampScore(d?.technical.score ?? 60), note: d?.technical.note ?? '' },
+    { key: 'communication', label: DIM_LABEL.communication, score: clampScore(d?.communication.score ?? 60), note: d?.communication.note ?? '' },
+    { key: 'composure', label: DIM_LABEL.composure, score: clampScore(d?.composure.score ?? 60), note: d?.composure.note ?? '' },
+    { key: 'structure', label: DIM_LABEL.structure, score: clampScore(d?.structure.score ?? 60), note: d?.structure.note ?? '' },
+  ];
   return {
     claims: parsed.claims,
     flags: parsed.flags,
     verifiedCount,
-    totalClaims: parsed.claims.length,
-    score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+    totalClaims,
+    score,
+    dimensions,
     composureNote: parsed.composureNote,
   };
 }
@@ -221,6 +275,7 @@ const GeneralZ = z.object({
   summary: z.string(),
   strengths: z.array(z.string()),
   improvements: z.array(z.string()),
+  dimensions: DimsZ.optional(),
 });
 
 const GENERAL_JSON_SCHEMA = {
@@ -231,12 +286,23 @@ const GENERAL_JSON_SCHEMA = {
     summary: { type: 'string' },
     strengths: { type: 'array', items: { type: 'string' } },
     improvements: { type: 'array', items: { type: 'string' } },
+    dimensions: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        technical: DIM_PROP_SCHEMA,
+        communication: DIM_PROP_SCHEMA,
+        composure: DIM_PROP_SCHEMA,
+        structure: DIM_PROP_SCHEMA,
+      },
+      required: ['technical', 'communication', 'composure', 'structure'],
+    },
   },
-  required: ['score', 'summary', 'strengths', 'improvements'],
+  required: ['score', 'summary', 'strengths', 'improvements', 'dimensions'],
 } as const;
 
 const GENERAL_SHAPE = `Respond with ONLY a single JSON object, no markdown fences, matching exactly:
-{"score":number,"summary":string,"strengths":[string],"improvements":[string]}`;
+{"score":number,"summary":string,"strengths":[string],"improvements":[string],"dimensions":{"technical":{"score":number,"note":string},"communication":{"score":number,"note":string},"composure":{"score":number,"note":string},"structure":{"score":number,"note":string}}}`;
 
 function generalSystem(trackTitle: string): string {
   return `You are an experienced investment-banking interview coach. You receive the transcript of a mock "${trackTitle}" round. This round is about DELIVERY and REASONING, not company facts — there is no fact-check here.
@@ -246,6 +312,7 @@ Assess the candidate's performance and return coaching:
 - summary: 1-2 sentences on how they did overall.
 - strengths: 2-4 specific things they did well, referencing what they actually said.
 - improvements: 2-4 specific, actionable fixes, referencing what they actually said.
+- dimensions: score four capabilities 0-100, each with a one-line "note" grounded in the transcript. (1) technical = depth and correctness of reasoning / domain knowledge; (2) communication = clarity, concision, signal-to-noise; (3) composure = how they held up under pressure and pushback; (4) structure = logical flow and framing of their answers.
 Be concrete; quote or paraphrase their words. Never invent claims they did not make.`;
 }
 
@@ -258,12 +325,22 @@ function generalUser(transcript: TranscriptTurn[]): string {
 
 function finalizeGeneral(raw: unknown): GeneralDebrief {
   const parsed = GeneralZ.parse(raw);
+  const d = parsed.dimensions;
+  const dimensions: Dimension[] | undefined = d
+    ? [
+        { key: 'technical', label: DIM_LABEL.technical, score: clampScore(d.technical.score), note: d.technical.note },
+        { key: 'communication', label: DIM_LABEL.communication, score: clampScore(d.communication.score), note: d.communication.note },
+        { key: 'composure', label: DIM_LABEL.composure, score: clampScore(d.composure.score), note: d.composure.note },
+        { key: 'structure', label: DIM_LABEL.structure, score: clampScore(d.structure.score), note: d.structure.note },
+      ]
+    : undefined;
   return {
     mode: 'general',
-    score: Math.max(0, Math.min(100, Math.round(parsed.score))),
+    score: clampScore(parsed.score),
     summary: parsed.summary,
     strengths: parsed.strengths,
     improvements: parsed.improvements,
+    dimensions,
   };
 }
 

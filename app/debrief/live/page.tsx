@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  CapabilityBars,
   ClaimRow,
   FlagCard,
   GeneralDebriefView,
-  ScorePanel,
+  ReadinessHero,
   TranscriptView,
 } from "@/app/components/debrief";
 import { CoverageGraph } from "@/app/components/coverage-graph";
 import { buildCoverageGraph } from "@/lib/coverage-graph";
-import type { AnyDebrief, DebriefResult, TranscriptTurn } from "@/lib/types";
+import type { AnyDebrief, DebriefResult, GeneralDebrief, TranscriptTurn } from "@/lib/types";
 
 type Stashed = {
   label: string;
@@ -71,7 +72,7 @@ export default function LiveDebriefPage() {
         </header>
 
         {isGeneral ? (
-          <GeneralDebriefView debrief={debrief} />
+          <GeneralDebriefSection debrief={debrief as GeneralDebrief} />
         ) : (
           <CitedDebrief debrief={debrief as DebriefResult} />
         )}
@@ -92,20 +93,29 @@ function CitedDebrief({ debrief }: { debrief: DebriefResult }) {
     () => (debrief.packs?.length ? buildCoverageGraph(debrief.packs, debrief) : null),
     [debrief],
   );
+  const dims = debrief.dimensions ?? [];
   return (
     <>
-      {graph && <CoverageGraph graph={graph} />}
-
-      <ScorePanel debrief={debrief} />
+      {dims.length > 0 && (
+        <>
+          <ReadinessHero dimensions={dims} verdict={debrief.composureNote} tally={debrief} />
+          <CapabilityBars dimensions={dims} />
+        </>
+      )}
 
       {debrief.flags.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-[1.35rem]">Bluffs caught</h2>
+          <h2 className="font-display text-[1.35rem]">The catch — bluffs vs. cited data</h2>
+          <p className="text-muted text-[0.85rem] -mt-1">
+            Where you contradicted Cala&apos;s ground truth. Every correction is sourced.
+          </p>
           <div className="grid gap-[1rem]">
             {debrief.flags.map((f, i) => <FlagCard key={i} flag={f} index={i} />)}
           </div>
         </section>
       )}
+
+      {graph && <CoverageGraph graph={graph} />}
 
       <section className="flex flex-col gap-2">
         <h2 className="font-display text-[1.35rem]">Every claim, checked</h2>
@@ -116,6 +126,21 @@ function CitedDebrief({ debrief }: { debrief: DebriefResult }) {
           {debrief.claims.map((c, i) => <ClaimRow key={i} claim={c} />)}
         </ul>
       </section>
+    </>
+  );
+}
+
+function GeneralDebriefSection({ debrief }: { debrief: GeneralDebrief }) {
+  const dims = debrief.dimensions ?? [];
+  return (
+    <>
+      {dims.length > 0 && (
+        <>
+          <ReadinessHero dimensions={dims} verdict={debrief.summary} />
+          <CapabilityBars dimensions={dims} />
+        </>
+      )}
+      <GeneralDebriefView debrief={debrief} />
     </>
   );
 }

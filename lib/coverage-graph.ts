@@ -329,7 +329,6 @@ export function buildCoverageGraph(packs: FactPack[], debrief: DebriefResult): C
     const x = C <= 1 ? W / 2 : W * (0.3 + (0.4 * i) / (C - 1));
     targets.set(id, { x, y: H / 2 });
   });
-  const centers = valid.map((p) => nodeIdForCompany(p.target));
 
   // fact nodes
   const allFacts: FactEntry[] = [];
@@ -396,6 +395,45 @@ export function buildCoverageGraph(packs: FactPack[], debrief: DebriefResult): C
   };
   for (const c of debrief.claims ?? []) applyClaim(c);
 
+  // ── prune to what the candidate actually engaged ──
+  // Grounded tracks merge the whole prep library (Stripe + OpenAI), but a single round only
+  // touches one of them. Keep only companies the candidate addressed, all of THEIR fact topics
+  // (untouched ones dim, for context), and any LIT entity — drop the other company and the
+  // large untouched-entity cloud that was pure noise. `hiddenCount` records what we dropped.
+  const lit = (n: GraphNode) => n.coverage !== 'untouched';
+  let activeCompanies = new Set(
+    nodes.filter((n) => n.kind !== 'company' && lit(n)).map((n) => n.company).filter(Boolean),
+  );
+  if (activeCompanies.size === 0) {
+    // No claims landed — fall back to the single richest company so the graph isn't empty.
+    const factsByCompany = new Map<string, number>();
+    for (const f of allFacts) factsByCompany.set(f.company, (factsByCompany.get(f.company) ?? 0) + 1);
+    const richest = [...factsByCompany.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (richest) activeCompanies = new Set([richest]);
+  }
+  const keep = (n: GraphNode): boolean => {
+    if (n.kind === 'company') return activeCompanies.has(n.company);
+    if (n.kind === 'fact') return activeCompanies.has(n.company);
+    return lit(n); // entity: only if the candidate actually named it
+  };
+  const hiddenCount = nodes.filter((n) => n.kind === 'entity' && !keep(n)).length;
+  const keptNodes = nodes.filter(keep);
+  const keptIds = new Set(keptNodes.map((n) => n.id));
+  const keptEdges = edges.filter((e) => keptIds.has(e.from) && keptIds.has(e.to));
+  nodes.length = 0;
+  nodes.push(...keptNodes);
+  edges.length = 0;
+  edges.push(...keptEdges);
+
+  // re-anchor the surviving centers (single center → dead center; otherwise spread)
+  const liveCenters = nodes.filter((n) => n.kind === 'company');
+  const CC = liveCenters.length;
+  targets.clear();
+  liveCenters.forEach((n, i) => {
+    targets.set(n.id, { x: CC <= 1 ? W / 2 : W * (0.3 + (0.4 * i) / (CC - 1)), y: H / 2 });
+  });
+  const centersOut = liveCenters.map((n) => n.id);
+
   // lay it out, then tight-crop the viewBox to the content (no dead letterbox space)
   forceLayout(nodes, edges, targets);
   let width = W;
@@ -422,5 +460,5 @@ export function buildCoverageGraph(packs: FactPack[], debrief: DebriefResult): C
     stats[n.coverage]++;
   }
 
-  return { nodes, edges, centers, width, height, hiddenCount: 0, stats };
+  return { nodes, edges, centers: centersOut, width, height, hiddenCount, stats };
 }

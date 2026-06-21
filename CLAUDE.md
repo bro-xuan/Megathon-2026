@@ -72,7 +72,29 @@ is 401/invalid** → voice falls back to Vapi default unless `VAPI_USE_ELEVENLAB
 Helper: `node scripts/glm-review.mjs <file>`.
 
 ## Status
-Build clean. Pending: real browser+mic WebRTC voice call, Vercel deploy.
+Build clean. Live browser+mic voice call **verified end-to-end** (2026-06-21): real Vapi web
+call (`POST api.vapi.ai/call/web` 201, Daily.co WebRTC + Krisp loaded), interviewer speaks,
+challenges a bluffed Stripe valuation live, ends on a debrief. Pending: Vercel deploy.
 
 ## Decision log (append newest on top)
+- **2026-06-21 — debrief page revamped into a capability scorecard.** Replaced the
+  graph-led debrief with a **readiness hero** (letter grade + weighted 0–100 + pentagon
+  **capability radar**) leading the page, then a **Capabilities** breakdown (5 bars w/ notes),
+  then "The catch" (flags), then the coverage map (now **secondary**). New data: the debrief
+  reasoner scores 4 dimensions (technical/communication/composure/structure) + a one-line note
+  each; **grounding** is computed from the fact-check (== `score`), not the model's opinion
+  (`DebriefResult.dimensions`, `GeneralDebrief.dimensions`; see `lib/scorecard.ts` for
+  `readinessScore`/`gradeFor`/`bandColor`/weights — grounding weighted 2×). Coverage graph
+  `buildCoverageGraph` now **prunes to the company actually addressed** (drops the other prep
+  company + the untouched-entity noise cloud; keeps all fact topics dim-for-context, lit
+  entities only; `hiddenCount` = dropped count, shown in footer) — fixes the "OpenAI in a
+  Stripe interview / 98 untouched nodes" complaint. Mock fixture `data/mock/stripe.json` carries
+  `dimensions` so the offline demo renders the new scorecard. `next build` clean; verified on
+  `/debrief/mock-stripe` (radar + bars + Stripe-only graph, no console errors).
+- **2026-06-21 — live voice call verified.** Drove `/spar/stock-pitch` in a real browser:
+  mic granted, grounded assistant (`/api/assistant` 200, 19 facts / 16.5k-char prompt, Groq
+  70B + Deepgram Aura-2/Nova-2), live $65B→$159B pushback, debrief reached. One benign
+  `401` on a sub-resource during the call (call still connected; likely Vapi/Daily or the
+  known-bad ElevenLabs key — stock-pitch voice uses Deepgram, not 11labs). Mock path
+  `/debrief/mock-stripe` confirmed offline-safe. `next build` clean (15 routes, TS passes).
 _Older verified facts folded into the sections above. Add only genuinely new decisions/quirks here._

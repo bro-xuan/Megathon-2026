@@ -62,6 +62,18 @@ export type TranscriptTurn = {
   text: string;
 };
 
+/** The capabilities measured each round. `grounding` is computed from the fact-check
+ *  (grounded tracks only); the rest are scored by the debrief reasoner from the transcript. */
+export type DimensionKey = 'grounding' | 'technical' | 'communication' | 'composure' | 'structure';
+
+/** One scored capability — the unit the readiness radar + bars render from. */
+export type Dimension = {
+  key: DimensionKey;
+  label: string;
+  score: number; // 0–100
+  note: string; // one-line, transcript-grounded justification
+};
+
 /** The full post-call scorecard produced by the Claude debrief pass (GROUNDED tracks). */
 export type DebriefResult = {
   mode?: 'cited'; // absent = cited (back-compat with fixtures)
@@ -69,7 +81,8 @@ export type DebriefResult = {
   flags: FactCheckFlag[];
   verifiedCount: number;
   totalClaims: number;
-  score: number; // 0–100 factual accuracy
+  score: number; // 0–100 factual accuracy (== the grounding dimension)
+  dimensions?: Dimension[]; // the multi-capability scorecard (grounding + 4 reasoner-scored)
   composureNote?: string; // one-line read on how the candidate handled being caught out (the reveal)
   packs?: FactPack[]; // un-merged prep packs, carried to the client to build the coverage graph
 };
@@ -132,6 +145,7 @@ export type GeneralDebrief = {
   summary: string;
   strengths: string[];
   improvements: string[];
+  dimensions?: Dimension[]; // 4 reasoner-scored capabilities (no grounding — nothing to check)
 };
 
 /** Either debrief shape — discriminated by `mode`. */

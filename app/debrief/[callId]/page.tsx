@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ClaimRow, FlagCard, ScorePanel, TranscriptView } from "@/app/components/debrief";
+import { CapabilityBars, ClaimRow, FlagCard, ReadinessHero, TranscriptView } from "@/app/components/debrief";
 import { CoverageGraph } from "@/app/components/coverage-graph";
 import { buildCoverageGraph } from "@/lib/coverage-graph";
 import { getFactPack } from "@/lib/factpack";
@@ -58,13 +58,19 @@ export default async function DebriefPage({
           </p>
         </header>
 
-        {graph && <CoverageGraph graph={graph} />}
-
-        <ScorePanel debrief={debrief} />
+        {debrief.dimensions && debrief.dimensions.length > 0 && (
+          <>
+            <ReadinessHero dimensions={debrief.dimensions} verdict={debrief.composureNote} tally={debrief} />
+            <CapabilityBars dimensions={debrief.dimensions} />
+          </>
+        )}
 
         {debrief.flags.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="font-display text-[1.35rem]">Bluffs caught</h2>
+            <h2 className="font-display text-[1.35rem]">The catch — bluffs vs. cited data</h2>
+            <p className="text-muted text-[0.85rem] -mt-1">
+              Where you contradicted Cala&apos;s ground truth. Every correction is sourced.
+            </p>
             <div className="grid gap-[1rem]">
               {debrief.flags.map((f, i) => (
                 <FlagCard key={i} flag={f} index={i} />
@@ -72,6 +78,8 @@ export default async function DebriefPage({
             </div>
           </section>
         )}
+
+        {graph && <CoverageGraph graph={graph} />}
 
         <section className="flex flex-col gap-2">
           <h2 className="font-display text-[1.35rem]">Every claim, checked</h2>
