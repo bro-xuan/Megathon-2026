@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   CONVERSATION_CATEGORIES,
@@ -12,6 +12,45 @@ import {
   type DomainId,
 } from "@/lib/tracks";
 import { Avatar } from "@/app/components/avatar";
+
+// One line-icon per conversation category, so the breadth reads visually before any copy does.
+// Stroke-based, inherit currentColor — tinted verified-deep on grounded tiles, muted otherwise.
+const CATEGORY_ICONS: Record<CategoryId, ReactNode> = {
+  interview: (
+    // Briefcase — the job-interview room.
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M3 12h18" />
+    </svg>
+  ),
+  "investor-pitch": (
+    // Rising line chart — pitching the numbers.
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 4v16h16" />
+      <polyline points="7 14 11 10 14 13 20 6" />
+      <polyline points="15 6 20 6 20 11" />
+    </svg>
+  ),
+  negotiation: (
+    // Balance scale — holding the line in a deal.
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 4v16" />
+      <path d="M8 20h8" />
+      <path d="M4 7h16" />
+      <circle cx="12" cy="4.5" r="1.1" />
+      <path d="M4 7l-2.2 5a2.6 2.6 0 0 0 4.4 0z" />
+      <path d="M20 7l-2.2 5a2.6 2.6 0 0 0 4.4 0z" />
+    </svg>
+  ),
+  "difficult-personal": (
+    // Two speech bubbles — the conversation with no script.
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-1-2z" />
+      <path d="M17 10h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1v3l-3-3" />
+    </svg>
+  ),
+};
 
 // Step 1 of the funnel: pick the KIND of conversation, then (for the one built category) the
 // partner. Two stacked layers so the "practice any hard conversation" breadth lives IN the flow,
@@ -90,17 +129,24 @@ export default function StartPage() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display text-[1.08rem] leading-tight">{c.label}</h3>
+                    <span
+                      className={`w-[2.6rem] h-[2.6rem] shrink-0 rounded-[0.7rem] border flex items-center justify-center [&>svg]:w-[1.35rem] [&>svg]:h-[1.35rem] ${
+                        c.grounded
+                          ? "bg-[var(--verified-soft)] border-[color-mix(in_srgb,var(--verified)_28%,transparent)] text-verified-deep"
+                          : "bg-surface border-border text-ink-soft"
+                      }`}
+                    >
+                      {CATEGORY_ICONS[c.id]}
+                    </span>
                     {c.live ? (
                       c.grounded ? (
                         <span className="source-chip shrink-0">★ cited</span>
                       ) : (
                         <span className="pill shrink-0">delivery</span>
                       )
-                    ) : (
-                      <span className="pill shrink-0">soon</span>
-                    )}
+                    ) : null}
                   </div>
+                  <h3 className="font-display text-[1.08rem] leading-tight">{c.label}</h3>
                   <p className="text-muted text-[0.82rem] leading-snug flex-1">{c.blurb}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {c.examples.slice(0, 3).map((ex) => (

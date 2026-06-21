@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CONVERSATION_CATEGORIES } from "@/lib/tracks";
-import { Avatar } from "@/app/components/avatar";
+import { ConversationShowcase } from "@/app/components/conversation-showcase";
 
 // Landing = the hard-conversation menu (DESIGN.md §8.0). Framing is "practice ANY hard
 // conversation", not "mock interviewer". The hero shows the product (a caught bluff, with its
@@ -61,114 +61,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Product proof — three capabilities of ONE stock-pitch round, NOT three bluff
-              examples. Composition (not a tall vertical stack): the cited moat card LEADS at
-              full width, then "pushes back" + "scores you" sit side-by-side beneath it. Halves
-              the column height while still showing all three things the product does. */}
-          <div
-            className="reveal lg:justify-self-end w-full max-w-[27rem] flex flex-col gap-3"
-            style={{ animationDelay: "120ms" }}
-          >
-            <span className="label-eyebrow">One stock-pitch round</span>
-
-            {/* Catches bluffs — the cited moat, leads the composition. Slim single-line Cala
-                attribution (the standalone tagline was redundant with the hero copy). */}
-            <div className="card-product card-grounded flex flex-col gap-3 shadow-[var(--shadow-lg)]">
-              <div className="flex items-center justify-between">
-                <span className="label-eyebrow" style={{ color: "var(--verified-deep)" }}>
-                  Catches bluffs
-                </span>
-                <span className="source-chip">★ cited</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <Avatar
-                  src="/portraits/stock-pitch.jpg"
-                  initials="MD"
-                  className="w-[2rem] h-[2rem] shrink-0 text-[0.7rem]"
-                />
-                <p className="fact-value text-ink-soft">
-                  &ldquo;OpenAI&apos;s last round valued it around{" "}
-                  <span className="text-flag line-through decoration-flag/50">$300 billion</span>
-                  .&rdquo;
-                </p>
-              </div>
-              <div className="border border-border rounded-[0.7rem] p-3 bg-canvas flex flex-col gap-2">
-                <span className="text-[0.7rem] font-semibold uppercase tracking-wide text-flag">
-                  ✕ bluff caught
-                </span>
-                <p className="text-[0.88rem]">
-                  <span className="text-muted">Correct: </span>
-                  <span className="fact-value">$852B after its $122B round (early 2026)</span>
-                </p>
-                {/* Citation must actually support the claim — the CNBC piece reports the
-                    $852B valuation / $122B round (closed 2026-03-31). NEVER link a source
-                    that contradicts the stated fact: it's the one click that kills a
-                    "grounded, cited" demo. */}
-                <a
-                  href="https://www.cnbc.com/2026/03/31/openai-funding-round-ipo.html"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="source-chip w-fit"
-                >
-                  ↗ cnbc.com
-                </a>
-              </div>
-              <div className="flex items-center justify-end gap-1.5 text-muted text-[0.66rem] uppercase tracking-wide border-t border-border pt-2.5">
-                verified by
-                <img src="/cala-logo.png" alt="Cala.ai" className="h-[0.85rem] w-auto opacity-80" />
-              </div>
-            </div>
-
-            {/* The other two capabilities, side-by-side — compact so the column stays short. */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Pushes back: a real spoken sparring partner, not a chatbox. */}
-              <div
-                className="card-product flex flex-col gap-2 shadow-[var(--shadow-sm)]"
-                style={{ padding: "0.9rem 1rem" }}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="label-eyebrow">Pushes back</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-verified shrink-0" />
-                </div>
-                <p className="text-[0.85rem] leading-snug text-ink-soft">
-                  &ldquo;Bold call — defend your gross margin at scale.&rdquo;
-                </p>
-              </div>
-
-              {/* Scores you: post-call debrief. Grounding low BECAUSE of the bluff above —
-                  same session, so the flag points back at the moat card. Links to the sample. */}
-              <Link
-                href="/debrief/mock-stripe"
-                className="card-product card-interactive flex flex-col gap-2 shadow-[var(--shadow-sm)] no-underline"
-                style={{ padding: "0.9rem 1rem" }}
-              >
-                <span className="label-eyebrow">Scores you</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-display text-[1.5rem] leading-none text-ink">B</span>
-                  <span className="text-[0.74rem] text-muted">78 / 100</span>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {[
-                    { label: "Composure", pct: 84, flag: false },
-                    { label: "Grounding", pct: 38, flag: true },
-                  ].map((b) => (
-                    <div key={b.label} className="flex items-center gap-1.5">
-                      <span className="text-[0.62rem] text-muted w-[3.4rem] shrink-0">
-                        {b.label}
-                      </span>
-                      <span className="h-1 flex-1 rounded-full bg-surface overflow-hidden">
-                        <span
-                          className={`block h-full rounded-full ${b.flag ? "bg-flag" : "bg-verified"}`}
-                          style={{ width: `${b.pct}%` }}
-                        />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <span className="text-[0.7rem] text-flag">✕ 1 bluff flagged</span>
-              </Link>
-            </div>
-          </div>
+          {/* Product proof — a STACKED DECK of three hard conversations the room runs, auto-
+              advancing so the breadth (and both flavors of the Cala moat: catches you / arms you)
+              reads without scrolling. See app/components/conversation-showcase.tsx. */}
+          <ConversationShowcase />
         </div>
       </section>
 

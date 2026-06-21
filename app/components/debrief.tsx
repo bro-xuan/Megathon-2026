@@ -8,92 +8,6 @@ const SEVERITY_COLOR: Record<FactCheckFlag["severity"], string> = {
   low: "var(--muted)",
 };
 
-/** A circular score gauge — the dramatic headline number, color-graded by band. */
-function ScoreGauge({ score, label }: { score: number; label: string }) {
-  const pct = Math.max(0, Math.min(100, score));
-  const color =
-    pct >= 80 ? "var(--verified)" : pct >= 55 ? "var(--flag-medium)" : "var(--flag)";
-  return (
-    <div className="relative w-[7rem] h-[7rem] shrink-0">
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: `conic-gradient(${color} ${pct * 3.6}deg, var(--surface) 0deg)`,
-        }}
-      />
-      <div className="absolute inset-[0.55rem] rounded-full bg-surface-product border border-border flex flex-col items-center justify-center">
-        <span className="font-display text-[2rem] leading-none" style={{ color }}>
-          {score}
-        </span>
-        <span className="text-muted text-[0.62rem] uppercase tracking-wide mt-0.5">{label}</span>
-      </div>
-    </div>
-  );
-}
-
-/** Top scorecard — accuracy gauge + citation-density tally + the recovery read (the reveal). */
-export function ScorePanel({ debrief }: { debrief: DebriefResult }) {
-  const { score, verifiedCount, totalClaims, flags, composureNote } = debrief;
-  // Recovery is measured only over bluffs the interviewer actually challenged.
-  const challenged = flags.filter((f) => f.recovery === "recovered" || f.recovery === "doubled-down");
-  const recovered = challenged.filter((f) => f.recovery === "recovered").length;
-  const allOwned = challenged.length > 0 && recovered === challenged.length;
-  return (
-    <section className="card-product flex flex-col gap-[1.5rem] reveal">
-      <div className="flex flex-wrap items-center gap-[2rem]">
-        <ScoreGauge score={score} label="accuracy" />
-        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
-        <div>
-          <div className="label-eyebrow">Claims verified</div>
-          <div className="font-display text-[2.2rem] leading-tight" style={{ color: "var(--verified-deep)" }}>
-            {verifiedCount}
-            <span className="text-muted text-[1.1rem] font-sans"> / {totalClaims}</span>
-          </div>
-          <div className="text-muted text-[0.8rem]">every one linked to a source</div>
-        </div>
-        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
-        <div>
-          <div className="label-eyebrow">Bluffs caught</div>
-          <div
-            className="font-display text-[2.2rem] leading-tight"
-            style={{ color: flags.length ? "var(--flag)" : "var(--verified)" }}
-          >
-            {flags.length}
-          </div>
-          <div className="text-muted text-[0.8rem]">all sourced</div>
-        </div>
-        <div className="h-[3.5rem] w-px bg-border hidden sm:block" />
-        <div>
-          <div className="label-eyebrow">Recovery</div>
-          {challenged.length ? (
-            <>
-              <div
-                className="font-display text-[2.2rem] leading-tight"
-                style={{ color: allOwned ? "var(--verified)" : "var(--flag)" }}
-              >
-                {recovered}
-                <span className="text-muted text-[1.1rem] font-sans"> / {challenged.length} owned</span>
-              </div>
-              <div className="text-muted text-[0.8rem]">when the MD pushed back</div>
-            </>
-          ) : (
-            <>
-              <div className="font-display text-[2.2rem] leading-tight text-muted">—</div>
-              <div className="text-muted text-[0.8rem]">no bluff was tested</div>
-            </>
-          )}
-        </div>
-      </div>
-      {composureNote && flags.length > 0 && (
-        <div className="border-t border-border pt-[1.25rem]">
-          <div className="label-eyebrow mb-1">Composure</div>
-          <p className="text-[0.95rem]">{composureNote}</p>
-        </div>
-      )}
-    </section>
-  );
-}
-
 // ── Readiness hero: the scorecard that leads the page ────────────────────────
 
 /** A one-line read on overall readiness, by band — the hero's headline. */
@@ -156,7 +70,9 @@ function CapabilityRadar({ dimensions }: { dimensions: Dimension[] }) {
         strokeLinejoin="round"
       />
       {dataPts.map((p, i) => (
-        <circle key={i} cx={p[0]} cy={p[1]} r={2.8} fill={fill} />
+        // Vertex colored by its OWN band, not the average — so a weak axis reads red even when
+        // the overall polygon is amber. This is the per-capability signal the radar exists for.
+        <circle key={i} cx={p[0]} cy={p[1]} r={3.2} fill={bandColor(dimensions[i].score)} />
       ))}
       {dimensions.map((d, i) => {
         const [lx, ly] = at(i, R + 15);

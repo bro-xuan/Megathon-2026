@@ -46,6 +46,12 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
   const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const startedAtRef = useRef<number | null>(null);
+  // Guard so the debrief runs exactly once — whether the user hits "End interview" or the
+  // call ends on its own (duration cap / interviewer wraps / Daily ejection).
+  const endedRef = useRef(false);
+  // Fresh transcript for the debrief: the call-end handler is registered once with a stale
+  // `turns` closure, so it reads the latest turns from here instead.
+  const turnsRef = useRef<TranscriptTurn[]>([]);
   const [phase, setPhase] = useState<Phase>("idle");
   const [turns, setTurns] = useState<TranscriptTurn[]>([]);
   const [facts, setFacts] = useState<LiveFact[]>([]);
@@ -82,6 +88,25 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
     };
   }, []);
 
+  // Daily (Vapi's WebRTC layer) throws "Meeting has ended" / ejection as an UNCAUGHT rejection
+  // when a call closes normally. It's benign — we already handle call teardown via the SDK's
+  // "call-end"/"error" events — but it trips Next's dev error overlay. Swallow just that one
+  // message (capture phase + stopImmediatePropagation so we beat the overlay's own listener);
+  // everything else still surfaces.
+  useEffect(() => {
+    const benign = /meeting (has )?ended|ejection|call (is |has )?(already )?ended/i;
+    function onRejection(e: PromiseRejectionEvent) {
+      const reason = e.reason as { message?: string } | string | undefined;
+      const msg = String((reason as { message?: string })?.message ?? reason ?? "");
+      if (benign.test(msg)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    window.addEventListener("unhandledrejection", onRejection, true);
+    return () => window.removeEventListener("unhandledrejection", onRejection, true);
+  }, []);
+
   // Tick an elapsed-time clock while the call is live (interviews are time-boxed).
   useEffect(() => {
     if (phase !== "live") return;
@@ -108,6 +133,10 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
     }
     setPhase("connecting");
     setError("");
+    // Fresh call: reset the once-only debrief guard and the "did we connect?" marker so a
+    // retry after an error doesn't inherit the previous attempt's state.
+    endedRef.current = false;
+    startedAtRef.current = null;
 
     // Mic pre-check. A live voice call needs the microphone; if it's blocked or absent, Vapi
     // emits only device *warnings* and hangs on "connecting". Check up front so the candidate
@@ -142,10 +171,19 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
       });
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
+      // The call closed (user ended, duration cap reached, or the interviewer wrapped up).
+      // If we actually went live and haven't already started the debrief, run it now — never
+      // leave the candidate stranded on a dead "live" screen.
+      vapi.on("call-end", () => {
+        clearConnectTimer();
+        setSpeaking(false);
+        if (endedRef.current || !startedAtRef.current) return; // user-ended, or never connected
+        endedRef.current = true;
+        runDebrief();
+      });
       vapi.on("error", (e: unknown) => {
         // Vapi emits a structured object, not an Error — dig out the real message.
         clearConnectTimer();
-        console.error("[vapi error]", e);
         const err = e as { error?: { message?: string }; errorMsg?: string; message?: string; msg?: string };
         const detail =
           err?.error?.message ??
@@ -153,6 +191,16 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
           err?.message ??
           err?.msg ??
           (typeof e === "string" ? e : JSON.stringify(e));
+        // "Meeting has ended" / ejection is Daily's benign end-of-call signal, not a failure.
+        // Route it like a normal call-end (debrief if we were live) instead of an error screen.
+        if (/meeting (has )?ended|ejection|call (is |has )?(already )?ended/i.test(String(detail))) {
+          if (startedAtRef.current && !endedRef.current) {
+            endedRef.current = true;
+            runDebrief();
+          }
+          return;
+        }
+        console.error("[vapi error]", e);
         setError(detail || "Vapi error (see console)");
         setPhase("error");
       });
@@ -176,6 +224,7 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
           if (last && last.role === role) last.text = `${last.text} ${text}`;
           else next.push({ role, text });
         }
+        turnsRef.current = next;
         setTurns(next);
       });
       // Arm the safety net before starting: if "call-start" never fires within 15s, bail to the
@@ -208,27 +257,37 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
     setMuted(next);
   }
 
-  async function endInterview() {
-    clearConnectTimer();
-    vapiRef.current?.stop();
+  // Score the call and hand off to the debrief. Called once per call — either from the
+  // "End interview" button or automatically when the call ends on its own. Reads the latest
+  // transcript from turnsRef (the call-end handler's `turns` closure is stale).
+  async function runDebrief() {
     setPhase("debriefing");
+    const transcript = turnsRef.current;
     try {
       const res = await fetch("/api/debrief", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ track: track!.id, transcript: turns }),
+        body: JSON.stringify({ track: track!.id, transcript }),
       });
       const debrief = await res.json();
       if (!res.ok) throw new Error(debrief.error ?? "Debrief failed");
       sessionStorage.setItem(
         "greenroom:debrief",
-        JSON.stringify({ label: track!.title, grounded: track!.grounded, transcript: turns, debrief }),
+        JSON.stringify({ label: track!.title, grounded: track!.grounded, transcript, debrief }),
       );
       router.push("/debrief/live");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Debrief failed");
       setPhase("error");
     }
+  }
+
+  function endInterview() {
+    if (endedRef.current) return; // already ending (e.g. call-end fired first)
+    endedRef.current = true;
+    clearConnectTimer();
+    vapiRef.current?.stop(); // fires "call-end", but endedRef guards re-entry
+    runDebrief();
   }
 
   const grounded = track!.grounded;
@@ -238,7 +297,7 @@ function SparPage({ params }: { params: Promise<{ track: string }> }) {
   // (prep → call → debrief). "Start the call" runs join().
   if (phase === "idle") {
     return (
-      <main className="container-page py-[3rem] flex flex-col gap-[1.5rem] flex-1">
+      <main className="container-page max-w-[44rem] py-[3rem] flex flex-col gap-[1.5rem] flex-1">
         <div className="flex items-center justify-between reveal">
           <Link href={persona ? "/persona" : "/start"} className="label-eyebrow hover:text-ink transition-colors">
             ← {persona ? "Distilled people" : "Choose partner"}

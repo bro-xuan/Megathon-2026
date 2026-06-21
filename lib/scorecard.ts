@@ -60,20 +60,16 @@ export function bandColor(score: number): string {
   return score >= 75 ? 'var(--verified)' : score >= 55 ? 'var(--flag-medium)' : 'var(--flag)';
 }
 
-/** Map a readiness score to a letter grade + a plain-language verdict label. */
+/** Map a readiness score to a letter grade + a plain-language verdict label. The letter is
+ *  fine-grained (every 5 pts); the verdict WORD and color are both keyed off the same 75/55
+ *  band thresholds (plus one split inside green) so a label never renders in two colors —
+ *  i.e. "Solid" is always green, "Developing" always amber, "Not ready" always red. */
 export function gradeFor(score: number): { grade: string; label: string; color: string } {
-  const bands: [number, string, string][] = [
-    [90, 'A+', 'Offer-ready'],
-    [85, 'A', 'Strong'],
-    [80, 'A−', 'Strong'],
-    [75, 'B+', 'Solid'],
-    [70, 'B', 'Solid'],
-    [65, 'B−', 'Developing'],
-    [60, 'C+', 'Developing'],
-    [55, 'C', 'Shaky'],
-    [50, 'C−', 'Shaky'],
-    [0, 'D', 'Not ready'],
+  const letters: [number, string][] = [
+    [90, 'A+'], [85, 'A'], [80, 'A−'], [75, 'B+'], [70, 'B'],
+    [65, 'B−'], [60, 'C+'], [55, 'C'], [50, 'C−'], [0, 'D'],
   ];
-  const [, grade, label] = bands.find(([min]) => score >= min)!;
+  const [, grade] = letters.find(([min]) => score >= min)!;
+  const label = score >= 85 ? 'Offer-ready' : score >= 75 ? 'Solid' : score >= 55 ? 'Developing' : 'Not ready';
   return { grade, label, color: bandColor(score) };
 }

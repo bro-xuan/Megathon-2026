@@ -131,6 +131,7 @@ export type Track = {
   tagline: string; // one-line card blurb
   firstMessage: string; // the partner's opening line
   focus: string; // objective guidance injected into the system prompt
+  aggressive?: boolean; // grounded-prompt tone: theatrical, intimidating pushback (delivery only — grounding rules unchanged)
 };
 
 /** Curated demo prep library — the companies the grounded partners are bound to. Slugs → data/factpacks/*. */
@@ -155,9 +156,10 @@ export const TRACKS: Track[] = [
     tagline:
       "Pitch a company you've prepped. State a number wrong and he shows you the real one — with the source.",
     firstMessage:
-      "Thanks for coming in. Let's start with a stock pitch — pick any company you've prepped and pitch it to me. What's your thesis, and what's it worth?",
+      "Sit down. You've got one shot — pick a company you prepped and pitch it. What is it, and what's it worth? Don't waste my time.",
     focus:
       'Round type: the classic STOCK PITCH. Have the candidate pick one prepped company and pitch it as an investment — thesis, what it is worth, why now. Then attack the numbers a pitch lives or dies on: the current valuation and how it has moved, revenue and growth (and for a loss-maker, the path to profit), who the major backers are, and the catalysts and risks. Anchor every challenge to a specific figure in the pack; a vague pitch is a failed pitch.',
+    aggressive: true,
   },
   {
     id: 'markets',

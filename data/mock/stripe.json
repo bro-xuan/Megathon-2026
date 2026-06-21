@@ -93,9 +93,9 @@
     ],
     "verifiedCount": 3,
     "totalClaims": 5,
-    "score": 45,
+    "score": 44,
     "dimensions": [
-      { "key": "grounding", "label": "Grounding", "score": 45, "note": "3/5 claims verified · 2 bluffs caught" },
+      { "key": "grounding", "label": "Grounding", "score": 44, "note": "3/5 claims verified · 2 bluffs caught" },
       { "key": "technical", "label": "Technical depth", "score": 64, "note": "Solid on the fundamentals — founders, private status, the Metronome acquisition — but the valuation framing was a year stale." },
       { "key": "communication", "label": "Communication", "score": 72, "note": "Clear and direct; answered the question without rambling." },
       { "key": "composure", "label": "Composure", "score": 34, "note": "Doubled down on $65B when the MD pushed back instead of reconsidering — the moment that sinks the round." },

@@ -81,6 +81,23 @@ call (`POST api.vapi.ai/call/web` 201, Daily.co WebRTC + Krisp loaded), intervie
 challenges a bluffed Stripe valuation live, ends on a debrief. Pending: Vercel deploy.
 
 ## Decision log (append newest on top)
+- **2026-06-21 — fixed the "interviewer responds late" lag; root cause was Groq free-tier
+  throttling, NOT turn-taking.** Pulled real call timings (`GET /call/{id}` →
+  `artifact.performanceMetrics.turnLatencies`): the "interrupt → 'go ahead' → long wait" turn
+  was `modelLatency` **16.6s** (turn avg ~7s, one clean turn 0.37s); endpointing avg 1.8s
+  (spikes 3.8s); `stopSpeakingPlan`/`backoffSeconds` never showed up (red herring — left as-is).
+  Groq header confirms **`x-ratelimit-limit-tokens: 12000`** (free tier). The system prompt was
+  re-sent UNCACHED every turn (`cachedPromptTokens:0`) at ~4.2k tok, so ~2–3 turns/min blew the
+  TPM cap → 429s → Vapi retry-backoff = the multi-second stalls. User declined paid tier, so two
+  free-tier fixes: (1) **trimmed the live prompt 4,242→2,345 tok** — `compactSummary()` in
+  `lib/vapi-assistant.ts` caps each Cala summary (~2k tok of prose) to ~360 chars and drops
+  networkLine 24→12; KEY CITED FACTS kept in full (grounding intact), debrief reads full packs
+  from disk (unaffected). (2) **tuned LiveKit endpointing** in `lib/voice.ts` —
+  `smartEndpointingPlan.waitFunction = "20 + 400*sqrt(x) + 1200*x^3"` caps the unsure-tail wait
+  ~3s→~1.6s on short yield phrases. Live call uses the **persisted dashboard assistant**, so
+  edits require re-sync; ran `npx tsx scripts/sync-vapi-assistants.ts` (note: `npm run sync:vapi`
+  uses `--env-file=.env` but the key lives in `.env.local`, so source that and run tsx directly).
+  Verified on Vapi assistant `d7ee83a5…`: prompt 2,345 tok, waitFunction set. `next build` clean.
 - **2026-06-21 — debrief page revamped into a capability scorecard.** Replaced the
   graph-led debrief with a **readiness hero** (letter grade + weighted 0–100 + pentagon
   **capability radar**) leading the page, then a **Capabilities** breakdown (5 bars w/ notes),

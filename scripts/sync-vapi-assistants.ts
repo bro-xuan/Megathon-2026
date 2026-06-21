@@ -14,15 +14,17 @@ import path from 'node:path';
 import { TRACKS, PREP_TARGETS } from '../lib/tracks';
 import { getPrepPacks } from '../lib/factpack';
 import { buildAssistant } from '../lib/vapi-assistant';
+import { trackElevenVoiceId } from '../lib/voice';
 
 const API = 'https://api.vapi.ai';
 const KEY = process.env.VAPI_PRIVATE_KEY;
 if (!KEY) throw new Error('VAPI_PRIVATE_KEY not set (it lives in .env; run via `npm run sync:vapi`)');
 
 // Mirrors /api/assistant: pass an ElevenLabs voiceId only when VAPI_USE_ELEVENLABS=1 and a valid
-// 11labs credential is registered in Vapi. When undefined, the assistant uses a Deepgram Aura-2
-// voice (Vapi-managed, no BYO key) — see lib/voice.ts.
-const voiceId = process.env.VAPI_USE_ELEVENLABS === '1' ? process.env.ELEVENLABS_VOICE_ID : undefined;
+// 11labs credential is registered in Vapi. A global ELEVENLABS_VOICE_ID still wins; otherwise we
+// use the per-track pin (e.g. stock-pitch → Adam). When undefined, the assistant uses a Deepgram
+// Aura-2 voice (Vapi-managed, no BYO key) — see lib/voice.ts.
+const useEleven = process.env.VAPI_USE_ELEVENLABS === '1';
 
 async function vapi(pathname: string, init: RequestInit = {}): Promise<any> {
   const res = await fetch(`${API}${pathname}`, {
@@ -42,6 +44,9 @@ async function main() {
   const map: Record<string, string> = {};
   for (const track of TRACKS) {
     const packs = track.grounded ? await getPrepPacks(PREP_TARGETS) : [];
+    const voiceId = useEleven
+      ? process.env.ELEVENLABS_VOICE_ID ?? trackElevenVoiceId(track.id)
+      : undefined;
     const assistant = buildAssistant(track, packs, { voiceId });
     const existingId = idByName.get(assistant.name);
     const saved = existingId

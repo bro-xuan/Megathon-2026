@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Manrope, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+import { BrandMark } from "./components/brand-mark";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"], weight: ["700"] });
@@ -30,8 +31,8 @@ export default function RootLayout({
         <header className="sticky top-0 z-50 border-b border-border bg-canvas/80 backdrop-blur-md">
           <div className="container-page h-[3.4rem] flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-2 group">
-              <span className="w-[1.5rem] h-[1.5rem] rounded-[0.45rem] avatar-accent flex items-center justify-center text-[0.7rem] font-display shadow-sm">
-                G
+              <span className="shadow-sm rounded-[0.45rem] transition-transform group-hover:-translate-y-px">
+                <BrandMark size={24} className="block rounded-[0.45rem]" />
               </span>
               <span className="font-display text-[1.05rem] tracking-tight">Greenroom</span>
             </Link>

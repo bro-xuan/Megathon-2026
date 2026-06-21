@@ -51,14 +51,29 @@ function boostKeywords(packs: FactPack[]): string[] {
 }
 
 function networkLine(pack: FactPack): string {
-  const names = Array.from(new Set(pack.relationships.map((r) => r.to))).slice(0, 24);
+  const names = Array.from(new Set(pack.relationships.map((r) => r.to))).slice(0, 12);
   return names.join(', ');
+}
+
+// The Cala summary is ~2k tokens of prose PER company, and the whole system prompt is re-sent
+// UNCACHED on every turn — against Groq's free-tier 12k-tokens/min cap that's what throttled the
+// live call into multi-second stalls (the 70B itself answers this prompt in ~0.4s when not rate-
+// limited; see the call-log diagnosis). The live interviewer's grounding is the KEY CITED FACTS
+// list (kept in full) — the summary only needs to ORIENT it, so keep the first sentence or two
+// (~360 chars). The post-call debrief reads the full pack from disk, so its fact-check is untouched.
+function compactSummary(summary: string): string {
+  const trimmed = summary.trim();
+  if (trimmed.length <= 360) return trimmed;
+  // Cut at the last sentence boundary within the budget so we never end mid-word.
+  const head = trimmed.slice(0, 360);
+  const lastStop = Math.max(head.lastIndexOf('. '), head.lastIndexOf('.\n'));
+  return (lastStop > 120 ? head.slice(0, lastStop + 1) : `${head.trimEnd()} `) + '[…]';
 }
 
 /** One "=== FACT PACK: Company ===" block per prepped company. */
 function packBlock(pack: FactPack): string {
   return `=== FACT PACK: ${pack.target} ===
-${pack.summary}
+${compactSummary(pack.summary)}
 
 KEY CITED FACTS:
 ${factLines(pack)}
@@ -69,22 +84,37 @@ ENTITIES IN THE NETWORK (probe these): ${networkLine(pack)}
 
 function groundedPrompt(track: Track, packs: FactPack[], candidateName: string): string {
   const companies = packs.map((p) => p.target).join(', ');
-  return `You are a sharp, friendly-but-demanding ${track.personaPrompt} running a live mock investment-banking interview with ${candidateName}. This is the "${track.title}" round — the "commercial awareness" bucket of a real IB interview (pitch a company / discuss a deal / defend a valuation). It is the part candidates can't fake by memorizing, so make it count.
+  // The persona descriptor + the bluff-handling bullet are the only pieces that change with tone.
+  // Everything else (the arc, fact-pack steering, and especially the HARD RULES grounding ceiling)
+  // is shared, so an aggressive round can never diverge into looser grounding.
+  const descriptor = track.aggressive
+    ? `a ruthless, intimidating ${track.personaPrompt} who has torn apart a thousand weak pitches. You are theatrical, impatient, and you do NOT coddle`
+    : `a sharp, friendly-but-demanding ${track.personaPrompt}`;
+  const pushback = track.aggressive
+    ? `- When a claim CONTRADICTS the matching FACT PACK, POUNCE. React with sharp incredulity — repeat the wrong number back in disbelief, make them feel it, and refuse to move on until they own the mistake. Be theatrical and cutting (e.g. "...Sixty-five billion? Are you serious? Did you even read the deck? Try again."). Stay punchy — one or two sharp sentences, then hand it back to them. Don't hand them the right number.`
+    : `- When a claim CONTRADICTS the matching FACT PACK, push back firmly but fairly: name the discrepancy and make them reconsider (e.g. "You said ninety billion — are you sure? Walk me through that."). Make them defend it; don't lecture and don't hand them the right number.`;
+  // Reinforce the grounding ceiling specifically for the aggressive persona, so its theatrics never
+  // become a license to invent a fact to attack (the live model hallucinates company facts).
+  const aggressionGuard = track.aggressive
+    ? `\n- Your aggression is pure delivery. You NEVER invent a fact to attack — you only pounce on a claim that contradicts a pack. If it's not in a pack, you can't challenge the number; press them to justify it instead.`
+    : '';
+  return `You are ${descriptor} running a live mock investment-banking interview with ${candidateName}. This is the "${track.title}" round — the "commercial awareness" bucket of a real IB interview (pitch a company / discuss a deal / defend a valuation). It is the part candidates can't fake by memorizing, so make it count.
 
 ${track.focus}
 
-HOW TO INTERVIEW (voice — keep every turn to 1-3 short sentences, ONE question at a time):
-- The candidate prepped these companies: ${companies}. Have THEM pick one, then drill that single name deep — a real banker goes deep on one company, not a survey.
-- Run the real arc: open-ended ask → make them COMMIT to a specific number, name, or date → follow up on that exact answer → pressure-test it. Banking rewards specificity and punishes vagueness, so don't accept "it's worth a lot" — push for the figure.
-- Steer every line into the facts the pack actually contains, because that is where bluffs surface: current valuation and how it moved over time, owners / lead investors / board, recent acquisitions (target, price, rationale) and likely acquirers, financials (revenue, growth, losses, burn, cash), and IPO / liquidity status.
-- Ask bankerly questions whose answers are IN the pack so you can judge the reply, e.g.: "What's it worth today, and how did you get there?" · "Walk me through a recent deal it did — rationale, price, who paid." · "Who are its biggest backers?" · "It's losing money at that valuation — justify the multiple." · "Public or private? How do shareholders get liquidity without an IPO?"
-- When a claim CONTRADICTS the matching FACT PACK, push back firmly but fairly: name the discrepancy and make them reconsider (e.g. "You said ninety billion — are you sure? Walk me through that."). Make them defend it; don't lecture and don't hand them the right number.
+HOW TO INTERVIEW (a real conversation, but a TIGHT one — this is a live voice call):
+- Keep every turn SHORT: one or two sentences, and ONE question. React to what they actually said, then ask the next thing — never deliver a speech, a paragraph, or a list.
+- Follow ONE thread at a time and FINISH it before you open the next. Don't jump between topics, and never re-ask or restate something you've already covered — every turn moves the conversation FORWARD.
+- Work a clear line of questioning: (1) the company and their one-line thesis → (2) make them defend the single strongest pillar of that thesis → (3) pin the valuation and how they get to it → (4) the biggest risk / the bear case. Stay reactive inside that spine — don't recite it as a checklist, but always know which step you're on.
+- The pack's hard facts (valuation and how it moved, owners / lead investors / board, recent deals, financials, IPO / liquidity) are where bluffs surface — drive there as the conversation earns it, not on every single turn.
+- SPEAKING NUMBERS OUT LOUD: write money and large figures the way they're SPOKEN — "a hundred fifty billion dollars", NEVER "$150B" or "$150 billion" (the dollar sign gets read out of order). Speak percentages and dates naturally too.
+${pushback}
 
 HARD RULES:
 - The FACT PACKS below are your ONLY source of truth about these companies. Treat them as current and correct.
 - NEVER assert a company fact from your own memory or training — you are known to hallucinate acquirers, dates, and valuations. If it is not in a pack, do not claim it; ask the candidate instead.
 - Only challenge clear contradictions with a pack. Do NOT try to comprehensively fact-check every claim out loud — a thorough check happens after the call.
-- Stay in character as the interviewer. Don't mention the fact packs or that you are an AI.
+- Stay in character as the interviewer. Don't mention the fact packs or that you are an AI.${aggressionGuard}
 
 ${packs.map(packBlock).join('\n\n')}`;
 }
@@ -215,6 +245,9 @@ export function buildAssistant(
       provider: 'groq' as const,
       model: 'llama-3.3-70b-versatile',
       temperature: 0.6,
+      // Hard cap so a turn can't run into a speech on a live call (the prompt asks for 1-2
+      // sentences; this is the backstop). ~150 tokens ≈ a few sentences of headroom before cutoff.
+      maxTokens: 150,
       messages: [
         { role: 'system' as const, content: buildSystemPrompt(track, packs, opts.candidateName) },
       ],

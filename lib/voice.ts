@@ -85,11 +85,23 @@ function hash(s: string): number {
 // so the rounds are pinned by hand for a deliberate 2M/2F spread. Personas (open-ended slug set)
 // fall through to the hash below, where collisions are rare and harmless.
 const TRACK_VOICE: Record<string, string> = {
-  'stock-pitch': 'orpheus', // M — professional, confident
+  'stock-pitch': 'jupiter', // M — knowledgeable baritone (harder fallback for the brutal MD)
   markets: 'harmonia',      // F — clear, calm, confident
   behavioral: 'electra',    // F — professional, engaging
   technical: 'jupiter',     // M — knowledgeable, baritone
 };
+
+// ElevenLabs voice pinned per track, used when ElevenLabs is enabled (VAPI_USE_ELEVENLABS=1).
+// More expressive than the Aura-2 fallback above — e.g. the aggressive stock-pitch MD wants a
+// dominant, forceful read. Falls through to TRACK_VOICE (Deepgram) when ElevenLabs is off.
+const TRACK_ELEVEN_VOICE: Record<string, string> = {
+  'stock-pitch': 'pNInz6obpgDQGcFmaJgB', // Adam — dominant, firm (premade, free-tier verified)
+};
+
+/** ElevenLabs voiceId pinned to a track, if any (only honored when ElevenLabs is enabled). */
+export function trackElevenVoiceId(trackId: string): string | undefined {
+  return TRACK_ELEVEN_VOICE[trackId];
+}
 
 /**
  * Aura-2 voice pinned to a specific persona slug, used as the NO-credential fallback (when
@@ -122,9 +134,18 @@ export function pickInterviewerVoice(seed: string, elevenVoiceId?: string): Vapi
 // detector (knows a mid-sentence pause from "done talking"); waitSeconds is the minimum silence on
 // top of it. Dropped 0.4 → 0.2 so the interviewer answers sooner after you stop — the faster Aura-2
 // TTS start does the rest. stopSpeakingPlan lets the candidate barge in over the interviewer.
+//
+// waitFunction maps P(user is STILL speaking) → ms to wait before the bot speaks. LiveKit's default
+// ("20 + 500*sqrt(x) + 2500*x^3") tails up to ~3s when it's unsure you're done — exactly the case
+// on short yield phrases ("yeah", "go ahead"), which showed up as 2.5–3.8s endpointing stalls in
+// the call logs. This curve keeps the fast path (~20ms when it's confident you stopped) but caps
+// the unsure tail at ~1.6s, so the interviewer comes back sooner after a short turn.
 export const START_SPEAKING_PLAN = {
   waitSeconds: 0.2,
-  smartEndpointingPlan: { provider: 'livekit' as const },
+  smartEndpointingPlan: {
+    provider: 'livekit' as const,
+    waitFunction: '20 + 400 * sqrt(x) + 1200 * x^3',
+  },
 };
 
 export const STOP_SPEAKING_PLAN = {

@@ -11,7 +11,7 @@ import path from 'node:path';
 import { getPrepPacks } from '@/lib/factpack';
 import { getPersona } from '@/lib/persona';
 import { buildAssistant, buildPersonaAssistant } from '@/lib/vapi-assistant';
-import { PERSONA_VOICE } from '@/lib/voice';
+import { PERSONA_VOICE, trackElevenVoiceId } from '@/lib/voice';
 import { getTrack, PREP_TARGETS } from '@/lib/tracks';
 import type { FactPack } from '@/lib/types';
 
@@ -80,7 +80,12 @@ export async function GET(request: Request) {
     const track = trackId ? getTrack(trackId) : undefined;
     if (!track) return Response.json({ error: 'Missing or unknown ?track=' }, { status: 400 });
     const packs = track.grounded ? await getPrepPacks(PREP_TARGETS) : [];
-    const assistant = buildAssistant(track, packs, { candidateName, voiceId });
+    // Per-track ElevenLabs pin (e.g. the brutal stock-pitch MD → Adam), used only when ElevenLabs
+    // is enabled; a global ELEVENLABS_VOICE_ID still wins. Off → undefined → Deepgram fallback.
+    const trackVoiceId = useEleven
+      ? process.env.ELEVENLABS_VOICE_ID ?? trackElevenVoiceId(track.id)
+      : undefined;
+    const assistant = buildAssistant(track, packs, { candidateName, voiceId: trackVoiceId });
     const factCount = packs.reduce((n, p) => n + p.facts.length, 0);
     const assistantId = await persistedAssistantId(track.id);
     return Response.json({ assistant, assistantId, factCount, facts: slimFacts(packs) });

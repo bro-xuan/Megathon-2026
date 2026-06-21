@@ -2,5 +2,11 @@
   "stock-pitch": "d7ee83a5-df7c-4bf9-a5f6-1ee7e54ee968",
   "markets": "58181423-5a20-494f-939b-4381c5f5598f",
   "behavioral": "d3dbdafa-3d5d-48e4-a2da-599d02a37ffc",
-  "technical": "b704bd52-1721-406b-aa96-2835891cf572"
+  "technical": "b704bd52-1721-406b-aa96-2835891cf572",
+  "sales-discovery": "47b78851-0dda-4cbf-92c4-a23a4668b432",
+  "sales-objection": "b35f1fb5-8289-456a-a6d5-abb06ced958a",
+  "consulting-case": "97c1334f-ab88-4b8b-a2a4-13054968139f",
+  "consulting-fit": "c3c9be39-d281-4f62-8a89-9c427495cfa6",
+  "med-mmi": "ffd76b07-1b31-417d-823d-67d51064a299",
+  "med-clinical": "937439cc-9ffe-4b57-9631-2b366446fc1c"
 }

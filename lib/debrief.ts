@@ -8,7 +8,7 @@
 // returns empty content — see CLAUDE.md gotcha).
 
 import { z } from 'zod';
-import type { Dimension, DebriefResult, FactPack, GeneralDebrief, TranscriptTurn } from './types';
+import type { Dimension, DebriefResult, FactCheckFlag, FactPack, GeneralDebrief, TranscriptTurn } from './types';
 import { entityEntries, factEntries, nodeIdForCompany } from './coverage-graph';
 import { DIM_LABEL } from './scorecard';
 
@@ -161,22 +161,44 @@ const clampScore = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 // catalog (e.g. "[fact:stripe:valuation]"). Strip them so claim→graph-node resolution matches.
 const stripBrackets = (s: string) => s.replace(/^\[+/, '').replace(/\]+$/, '').trim();
 
+// Grounding is the moat, so its score must be DETERMINISTIC and explainable — not the model's
+// freehand guess. We compute it from the fact-check itself: the share of *checkable* claims
+// (verified + flagged) that survived Cala's data, then an extra centrality penalty so a wrong
+// claim about something load-bearing (a high-severity bluff like valuation/ownership) costs more
+// than the ratio hit alone. Same transcript → same number, and you can read it off the page:
+// "60% of checkable claims held up, minus the valuation bluff." Returns null when nothing the
+// candidate said was checkable against the pack (all unverifiable / no claims) — grounding is
+// "untested" then, and we omit the dimension rather than invent a score.
+const SEVERITY_EXTRA: Record<FactCheckFlag['severity'], number> = { high: 12, medium: 4, low: 0 };
+function groundingScore(verifiedCount: number, flags: { severity: FactCheckFlag['severity'] }[]): number | null {
+  const checkable = verifiedCount + flags.length; // flagged claims == flags (one per wrong claim)
+  if (checkable === 0) return null;
+  const base = (verifiedCount / checkable) * 100;
+  const extra = flags.reduce((s, f) => s + (SEVERITY_EXTRA[f.severity] ?? 4), 0);
+  return clampScore(base - extra);
+}
+
 function finalize(raw: unknown): DebriefResult {
   const parsed = DebriefZ.parse(raw); // claims/flags now carry nodeId (default "") → passed through
   parsed.claims.forEach((c) => (c.nodeId = stripBrackets(c.nodeId)));
   parsed.flags.forEach((f) => (f.nodeId = stripBrackets(f.nodeId)));
   const verifiedCount = parsed.claims.filter((c) => c.verdict === 'verified').length;
   const totalClaims = parsed.claims.length;
-  const score = clampScore(parsed.score);
   const flagCount = parsed.flags.length;
-  // The grounding dimension IS the fact-check result (computed, not the model's opinion); the
-  // other four come from the reasoner. If the model omitted them, fall back to neutral mids.
+  // Grounding is COMPUTED from the fact-check (deterministic + explainable), never the model's
+  // freehand `score`. null = nothing was checkable this round, so we omit the grounding dimension
+  // and the scorecard renders the four delivery axes instead of pretending to have a fact verdict.
+  const grounding = groundingScore(verifiedCount, parsed.flags);
+  const score = grounding ?? 0; // vestigial top-level field; kept == grounding for back-compat
+  // The other four dimensions come from the reasoner; if it omitted them, fall back to neutral mids.
   const d = parsed.dimensions;
   const groundingNote = totalClaims
     ? `${verifiedCount}/${totalClaims} claims verified · ${flagCount} bluff${flagCount === 1 ? '' : 's'} caught`
     : 'No factual claims to check this round';
   const dimensions: Dimension[] = [
-    { key: 'grounding', label: DIM_LABEL.grounding, score, note: groundingNote },
+    ...(grounding !== null
+      ? [{ key: 'grounding' as const, label: DIM_LABEL.grounding, score: grounding, note: groundingNote }]
+      : []),
     { key: 'technical', label: DIM_LABEL.technical, score: clampScore(d?.technical.score ?? 60), note: d?.technical.note ?? '' },
     { key: 'communication', label: DIM_LABEL.communication, score: clampScore(d?.communication.score ?? 60), note: d?.communication.note ?? '' },
     { key: 'composure', label: DIM_LABEL.composure, score: clampScore(d?.composure.score ?? 60), note: d?.composure.note ?? '' },
