@@ -18,8 +18,8 @@ export const SceneProblem: React.FC<{ durationInFrames: number }> = ({ durationI
   const opacity = useSceneFade(durationInFrames, 16, 18);
 
   // The list dominates the first ~2/3, then dims as the thesis takes over.
-  const listFade = interpolate(frame, [326, 366], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const thesisStart = 372;
+  const listFade = interpolate(frame, [300, 338], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const thesisStart = 344;
 
   return (
     <AbsoluteFill style={{ background: C.footer, opacity, fontFamily: FONT.sans }}>

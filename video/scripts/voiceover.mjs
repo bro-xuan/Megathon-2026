@@ -19,49 +19,67 @@ const ROOT = join(__dirname, "..");
 const AUDIO_DIR = join(ROOT, "public", "audio");
 const FPS = 30;
 
+// Auto-load secrets from the repo's env files so `npm run voiceover` uses ElevenLabs without you
+// having to `source` anything. Existing shell vars win; values are never printed.
+for (const envName of [".env.local", ".env"]) {
+  const p = join(ROOT, "..", envName);
+  if (!existsSync(p)) continue;
+  for (const line of readFileSync(p, "utf8").split("\n")) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+}
+
 // ── Narration script ────────────────────────────────────────────────────────────────────────
 // `vo` is the spoken line. `head`/`tail` are silent pad (seconds) before/after the audio inside
 // the scene so it breathes. Scene duration = head + audioDuration + tail (+ minSec floor).
+// Note on pace: no "…" ellipses — ElevenLabs honors them as long dramatic pauses, which dragged.
+// Tails are short (dead air = slow), and VO_SPEED (below) nudges the whole read faster.
 const SCENES = [
   {
     id: "problem",
-    head: 0.5,
-    tail: 1.3,
-    vo: "Some conversations, you only get one shot at. The raise you've rehearsed a hundred times — in your head. The interview that sets up the next four years. The talk you keep putting off. And we walk in cold... because there's nowhere to practice the hardest thing we ever do. Talking to another person.",
+    head: 0.4,
+    tail: 0.7,
+    vo: "Some conversations, you only get one shot at. The raise you've rehearsed a hundred times in your head. The interview that sets up the next four years. The talk you keep putting off. And we walk in cold, because there's nowhere to practice the hardest thing we ever do — talking to another person.",
   },
   {
     id: "intro",
-    head: 0.4,
-    tail: 1.0,
-    vo: "Greenroom is a voice-native room to practice any hard conversation — out loud, against someone who actually challenges you. First, you pick the conversation. Then it becomes the person across the table — their stance, their resistance, their toughest questions. And when the conversation turns on facts, Greenroom is grounded in real, cited sources, powered by Cala — so it holds you to what's actually true.",
+    head: 0.3,
+    tail: 0.55,
+    vo: "Greenroom is a voice-native room to practice any hard conversation, out loud, against someone who actually challenges you. You pick the conversation. It becomes the person across the table: their stance, their resistance, their toughest questions. And when the conversation turns on facts, Greenroom is grounded in real, cited sources, powered by Cala, so it holds you to what's true.",
   },
   {
     id: "demo",
-    head: 0.4,
-    tail: 1.8,
+    head: 0.3,
+    tail: 2.2, // hold on the bluff-catch — it's the hero beat
     // Mode A bridge VO. If you drop in your own screen recording (Mode B), set vo:"" here and
     // re-run — the scene will size to the recording instead (see src/scenes/SceneDemo.tsx).
-    vo: "So step into a live call. You make your case, out loud, in real time. And the moment a number doesn't hold up... it catches you. On the record.",
+    vo: "Step into a live call. You make your case, out loud, in real time. And the moment a number doesn't hold up, it catches you. On the record.",
   },
   {
     id: "debrief",
-    head: 0.4,
-    tail: 1.3,
-    vo: "When the call ends, Greenroom scores how you carried it. Five capabilities — grounding, composure, structure, and more. What you nailed. Where you bluffed. And exactly what to fix before it's real.",
+    head: 0.3,
+    tail: 0.7,
+    vo: "When the call ends, Greenroom scores how you carried it. Five capabilities: grounding, composure, structure, and more. What you nailed, where you bluffed, and exactly what to fix before it's real.",
   },
   {
     id: "close",
-    head: 0.4,
-    tail: 1.8,
-    vo: "Greenroom. Practice the conversation... before it counts. Walk in ready.",
+    head: 0.3,
+    tail: 2.0, // let "Walk in ready." + the prize credits breathe
+    vo: "Greenroom. Practice the conversation before it counts. Walk in ready.",
   },
 ];
 
 // ── TTS providers ─────────────────────────────────────────────────────────────────────────────
 const EL_KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE_ID = process.env.VO_VOICE_ID || "JBFqnCBsd6RMkjVDRZzb"; // George — warm, captivating narrator
+const VOICE_ID = process.env.VO_VOICE_ID || "SAz9YHcvj6GT2YYXdXww"; // River — relaxed, neutral, natural
 const MODEL = process.env.VO_MODEL || "eleven_multilingual_v2";
 const USE_SAY = process.env.USE_SAY === "1" || !EL_KEY;
+// Pace: speed the rendered read up slightly (pitch-preserving). 1.0 = natural, ~1.08 = snappier.
+const SPEED = parseFloat(process.env.VO_SPEED || "1.08");
+// Lower stability + some style = more dynamic, human delivery (less "AI monotone").
+const STABILITY = parseFloat(process.env.VO_STABILITY || "0.34");
+const STYLE = parseFloat(process.env.VO_STYLE || "0.32");
 
 async function synthElevenLabs(text, outMp3) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
@@ -70,19 +88,28 @@ async function synthElevenLabs(text, outMp3) {
     body: JSON.stringify({
       text,
       model_id: MODEL,
-      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.16, use_speaker_boost: true },
+      voice_settings: { stability: STABILITY, similarity_boost: 0.75, style: STYLE, use_speaker_boost: true },
     }),
   });
   if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${await res.text()}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  writeFileSync(outMp3, buf);
+  writeFileSync(outMp3, Buffer.from(await res.arrayBuffer()));
+  applySpeed(outMp3);
 }
 
 function synthSay(text, outMp3) {
   const aiff = outMp3.replace(/\.mp3$/, ".aiff");
-  execFileSync("say", ["-v", process.env.SAY_VOICE || "Samantha", "-r", "172", "-o", aiff, text]);
+  execFileSync("say", ["-v", process.env.SAY_VOICE || "Samantha", "-r", "182", "-o", aiff, text]);
   execFileSync("ffmpeg", ["-y", "-i", aiff, "-codec:a", "libmp3lame", "-qscale:a", "2", outMp3], { stdio: "ignore" });
   execFileSync("rm", ["-f", aiff]);
+  applySpeed(outMp3);
+}
+
+// Pitch-preserving tempo change via ffmpeg atempo. No-op when SPEED ≈ 1.
+function applySpeed(mp3) {
+  if (!SPEED || Math.abs(SPEED - 1) < 0.001) return;
+  const tmp = mp3.replace(/\.mp3$/, ".spd.mp3");
+  execFileSync("ffmpeg", ["-y", "-i", mp3, "-filter:a", `atempo=${SPEED}`, "-codec:a", "libmp3lame", "-qscale:a", "2", tmp], { stdio: "ignore" });
+  execFileSync("mv", ["-f", tmp, mp3]);
 }
 
 function probeDuration(mp3) {

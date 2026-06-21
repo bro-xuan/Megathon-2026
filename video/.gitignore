@@ -1,1 +1,8 @@
+# Isolated Remotion project — keep heavy/build artifacts out of git.
 node_modules/
+*.log
+.DS_Store
+
+# Render scratch — the final cut is committed explicitly (out/greenroom.mp4); ignore the rest.
+out/*
+!out/greenroom.mp4

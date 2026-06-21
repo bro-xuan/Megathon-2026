@@ -12,7 +12,7 @@ export const SceneClose: React.FC<{ durationInFrames: number }> = ({ durationInF
   const { fps } = useVideoConfig();
   const opacity = useSceneFade(durationInFrames, 16, 20);
   const readyScale = useScaleIn(58, fps, 0.86);
-  const creditsO = interpolate(frame, [120, 145], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const creditsO = interpolate(frame, [88, 112], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ background: C.footer, opacity, fontFamily: FONT.sans, color: "#fff" }}>
