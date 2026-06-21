@@ -115,17 +115,22 @@ export default function StartPage() {
           <div className="grid gap-[1.1rem] sm:grid-cols-2 lg:grid-cols-4">
             {CONVERSATION_CATEGORIES.map((c) => {
               const active = c.id === category;
+              // The one category that runs end-to-end on stage — its frame stays lit while the
+              // other categories grey out, so a cold browse (a judge) is drawn straight to it.
+              const isDemo = c.id === "interview";
               return (
                 <button
                   key={c.id}
                   onClick={() => setCategory(c.id)}
                   aria-pressed={active}
-                  className={`text-left card-product flex flex-col gap-3 transition-all ${
+                  className={`text-left card-product card-interactive flex flex-col gap-3 transition-all ${
                     c.grounded ? "card-grounded" : ""
                   } ${
-                    active
-                      ? "ring-2 ring-[var(--verified)] shadow-[var(--shadow-lg)]"
-                      : "opacity-70 hover:opacity-100 card-interactive"
+                    isDemo
+                      ? "card-demo"
+                      : active
+                        ? "ring-2 ring-[var(--verified)] shadow-[var(--shadow-lg)]"
+                        : "opacity-50 grayscale hover:grayscale-0 hover:opacity-100"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -242,12 +247,19 @@ export default function StartPage() {
                   {activeDomain.label} · {partners.length} partners
                 </span>
                 <div className="grid gap-[1.25rem] lg:grid-cols-2">
-                  {partners.map((t, i) => (
+                  {partners.map((t, i) => {
+                    // Marcus (stock-pitch) is the partner the live demo sits down with — spotlight him.
+                    const isDemo = t.id === "stock-pitch";
+                    return (
                     <Link
                       key={t.id}
                       href={`/spar/${encodeURIComponent(t.id)}`}
                       className={`card-product card-interactive group flex gap-5 reveal ${
                         t.grounded ? "card-grounded" : ""
+                      } ${
+                        isDemo
+                          ? "card-demo"
+                          : "opacity-50 grayscale hover:grayscale-0 hover:opacity-100"
                       }`}
                       style={{ animationDelay: `${i * 60}ms` }}
                     >
@@ -285,7 +297,8 @@ export default function StartPage() {
                         </span>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ) : (

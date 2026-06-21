@@ -307,6 +307,30 @@ body {
   animation: live-pulse 1.8s ease-out infinite;
 }
 
+/* ── Demo spotlight — points hackathon judges at the one path that runs end-to-end.
+   A breathing accent ring + a "start here" badge make the demo route unmistakable on
+   a cold browse, without touching the rest of the roster. ── */
+.card-demo {
+  position: relative;
+  border-color: color-mix(in srgb, var(--verified) 60%, transparent) !important;
+  box-shadow: var(--shadow-accent);
+}
+.card-demo::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: demo-glow 2.6s ease-in-out infinite;
+}
+@keyframes demo-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--verified) 45%, transparent); }
+  55%      { box-shadow: 0 0 0 0.6rem transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-demo::after { animation: none; }
+}
+
 /* ── Motion ── */
 
 /* Entrance settle. Starts at a non-zero opacity floor so a route change never blanks
