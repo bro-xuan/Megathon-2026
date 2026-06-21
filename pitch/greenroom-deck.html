@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Greenroom — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ── Greenroom brand tokens (mirrors app/globals.css) ───────────────────────── */
+  :root{
+    --canvas:#ffffff; --canvas-tint:#fafaf9; --surface:#f5f5f4; --surface-product:#ffffff;
+    --ink:#0c0c0d; --ink-soft:#2a2a2c; --muted:#6b7280; --border:#e7e7e4; --border-strong:#d8d8d4;
+    --footer:#0b0b0c;
+    --verified:#1c8a4e; --verified-deep:#0f6b3a; --verified-soft:#eaf6ef;
+    --flag:#d23b3b; --flag-medium:#b45309; --flag-soft:#fbecec;
+    --shadow-sm:0 1px 2px rgba(12,12,13,.04),0 1px 1px rgba(12,12,13,.03);
+    --shadow-md:0 2px 4px rgba(12,12,13,.04),0 6px 16px rgba(12,12,13,.06);
+    --shadow-lg:0 4px 8px rgba(12,12,13,.05),0 16px 40px rgba(12,12,13,.10);
+    --sans:"Inter",system-ui,sans-serif;
+    --display:"Manrope","Inter",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#101012; color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+
+  /* ── 16:9 stage, scales to viewport ─────────────────────────────────────────── */
+  .stage{
+    position:relative; width:min(100vw,177.78vh); height:min(56.25vw,100vh);
+    background:var(--canvas); overflow:hidden; box-shadow:0 30px 90px rgba(0,0,0,.5);
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:4.2% 5.2%; opacity:0; visibility:hidden;
+    transform:translateY(14px) scale(.995); transition:opacity .45s ease, transform .45s ease;
+    pointer-events:none;
+  }
+  .slide.active{opacity:1; visibility:visible; transform:none; pointer-events:auto}
+
+  .font-display{font-family:var(--display); font-weight:700; letter-spacing:-.04em; line-height:1.02}
+  .mono{font-family:var(--mono)}
+  .accent{
+    background:linear-gradient(135deg,var(--verified),var(--verified-deep));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  /* ── chrome: brand lockup + slide label + footer ────────────────────────────── */
+  .chrome-top{position:absolute; top:0; left:0; right:0; height:3.4rem;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 5.2%; font-size:.78rem;}
+  .brand{display:flex; align-items:center; gap:.5rem}
+  .brand .wm{font-family:var(--display); font-weight:700; letter-spacing:-.03em; font-size:1rem}
+  .slabel{font-family:var(--mono); font-size:.72rem; color:var(--muted); letter-spacing:.02em}
+  .eyebrow{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--verified-deep); display:inline-flex; align-items:center; gap:.5rem}
+  .eyebrow::before{content:""; width:1.4rem; height:1px; background:var(--verified)}
+
+  .pill{display:inline-flex; align-items:center; gap:.45rem; border:1px solid var(--border-strong);
+    border-radius:999px; padding:.3rem .7rem; font-size:.74rem; color:var(--ink-soft); background:#fff}
+  .dot{width:.46rem; height:.46rem; border-radius:999px; background:var(--verified)}
+  .chip-cited{display:inline-flex; align-items:center; gap:.35rem; font-family:var(--mono);
+    font-size:.68rem; color:var(--verified-deep); background:var(--verified-soft);
+    border:1px solid color-mix(in srgb,var(--verified) 25%,transparent); border-radius:999px; padding:.22rem .55rem}
+
+  .card{background:var(--surface-product); border:1px solid var(--border); border-radius:.85rem;
+    box-shadow:var(--shadow-md); padding:1.3rem 1.4rem}
+  .card.tint{background:var(--canvas-tint)}
+  .card.grounded{box-shadow:var(--shadow-md),inset 3px 0 0 var(--verified)}
+
+  h1.title{font-size:clamp(2rem,4.1vw,3.5rem)}
+  .lead{color:var(--ink-soft); font-size:clamp(1rem,1.55vw,1.4rem); font-weight:500; line-height:1.28}
+  .body{color:var(--muted); font-size:clamp(.82rem,1.05vw,.98rem); line-height:1.5}
+  .kicker{color:var(--muted); font-size:.8rem; letter-spacing:.02em}
+
+  /* ── hero aura backdrop (matches app) — used on cover/summary ────────────────── */
+  .aura::before{content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(55% 50% at 12% 0%, color-mix(in srgb,var(--verified) 13%,transparent), transparent 70%),
+      radial-gradient(42% 45% at 95% 100%, color-mix(in srgb,var(--ink) 5%,transparent), transparent 70%);}
+  .aura::after{content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:radial-gradient(circle, rgba(12,12,13,.06) 1px, transparent 1px);
+    background-size:22px 22px;
+    -webkit-mask-image:linear-gradient(to bottom, #000 0%, transparent 62%);
+            mask-image:linear-gradient(to bottom, #000 0%, transparent 62%);}
+  .slide > *{position:relative; z-index:1}
+
+  /* ── waveform brand mark (inline) ───────────────────────────────────────────── */
+  .wmark{display:block; border-radius:.42rem; box-shadow:var(--shadow-sm)}
+
+  /* ── progress dots + counter ────────────────────────────────────────────────── */
+  .nav{position:absolute; bottom:1.05rem; left:5.2%; right:5.2%; display:flex;
+    align-items:center; justify-content:space-between; z-index:5}
+  .dots{display:flex; gap:.45rem}
+  .ndot{width:1.45rem; height:.28rem; border-radius:999px; background:var(--border-strong);
+    cursor:pointer; transition:background .3s, width .3s}
+  .ndot.on{background:var(--verified); width:2.2rem}
+  .counter{font-family:var(--mono); font-size:.72rem; color:var(--muted)}
+  .sponsor{font-family:var(--mono); font-size:.7rem; color:var(--muted)}
+  .sponsor b{color:var(--ink-soft); font-weight:500}
+
+  /* ── grids / utility ────────────────────────────────────────────────────────── */
+  .row{display:flex; gap:1.1rem}
+  .col{display:flex; flex-direction:column}
+  .grow{flex:1}
+  .gap-s{gap:.5rem}.gap-m{gap:.85rem}.gap-l{gap:1.3rem}
+  .between{justify-content:space-between}.center{align-items:center}
+
+  /* ── flow steps (slide 2) ───────────────────────────────────────────────────── */
+  .step{flex:1; display:flex; flex-direction:column; gap:.4rem}
+  .step .n{font-family:var(--mono); font-size:.7rem; color:var(--verified-deep)}
+  .step h4{font-family:var(--display); font-weight:700; font-size:1.15rem; letter-spacing:-.02em}
+  .arrow{align-self:center; color:var(--border-strong); font-size:1.3rem; padding-top:1.1rem}
+
+  /* ── feature cards (slide 3) ────────────────────────────────────────────────── */
+  .feat{flex:1; display:flex; flex-direction:column; gap:.6rem}
+  .feat .fn{font-family:var(--display); font-weight:800; font-size:1.5rem;
+    color:color-mix(in srgb,var(--verified) 32%,transparent); line-height:1}
+  .feat h4{font-family:var(--display); font-weight:700; font-size:1.15rem; letter-spacing:-.02em}
+
+  /* ── slide 4 spar mock ──────────────────────────────────────────────────────── */
+  .stage-frame{background:var(--surface); border:1px solid var(--border); border-radius:1rem;
+    padding:1.1rem; display:flex; flex-direction:column; gap:.9rem; box-shadow:var(--shadow-md)}
+  .avatar{width:4.6rem; height:4.6rem; border-radius:50%;
+    background:linear-gradient(135deg,#1f2937,#0c0c0d); color:#fff; display:flex; align-items:center;
+    justify-content:center; font-family:var(--display); font-weight:700; font-size:1.4rem; letter-spacing:-.02em}
+  .orb{width:.6rem; height:.6rem; border-radius:999px; background:var(--verified);
+    box-shadow:0 0 0 0 color-mix(in srgb,var(--verified) 55%,transparent); animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--verified) 45%,transparent)}
+    70%{box-shadow:0 0 0 .55rem transparent} 100%{box-shadow:0 0 0 0 transparent}}
+  .tline{display:flex; gap:.6rem; font-size:.82rem; line-height:1.4}
+  .trole{font-family:var(--mono); font-size:.64rem; color:var(--muted); flex:0 0 4.3rem; padding-top:.15rem; text-transform:uppercase; letter-spacing:.05em}
+  .ttext{color:var(--ink-soft)}
+  .ttext.flag{background:var(--flag-soft); border-radius:.35rem; padding:.15rem .4rem;
+    box-shadow:inset 2px 0 0 var(--flag)}
+  .flagcard{border:1px solid color-mix(in srgb,var(--flag) 30%,transparent); background:var(--flag-soft);
+    border-radius:.6rem; padding:.75rem .85rem; display:flex; flex-direction:column; gap:.35rem}
+  .flagcard .ftop{display:flex; align-items:center; gap:.5rem; font-family:var(--mono);
+    font-size:.66rem; color:var(--flag); letter-spacing:.04em; text-transform:uppercase}
+  .flagcard .fcorrect{font-family:var(--mono); font-size:.8rem; color:var(--ink)}
+  .src{font-family:var(--mono); font-size:.68rem; color:var(--verified-deep);
+    display:inline-flex; align-items:center; gap:.3rem}
+  .src::before{content:"↗"; font-size:.7rem}
+
+  .scorebadge{display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:var(--ink); color:#fff; border-radius:.85rem; padding:1rem 1.4rem; min-width:7.5rem}
+  .scorebadge .g{font-family:var(--display); font-weight:800; font-size:2.6rem; line-height:1; color:var(--flag)}
+  .scorebadge .s{font-family:var(--mono); font-size:.72rem; color:rgba(255,255,255,.6); margin-top:.3rem}
+
+  /* ── summary dark band ──────────────────────────────────────────────────────── */
+  .darkband{background:var(--footer); color:#fff; border-radius:1rem; padding:1.5rem 1.7rem;
+    display:flex; align-items:center; justify-content:space-between; gap:1.5rem}
+  .check{display:flex; gap:.6rem; align-items:flex-start; font-size:.92rem; color:var(--ink-soft); line-height:1.35}
+  .check .mk{color:var(--verified); font-weight:700; flex:0 0 auto; margin-top:.05rem}
+
+  /* generic-AI failure bubble (slide 1) */
+  .chatcard{display:flex; flex-direction:column; gap:.7rem}
+  .bub{border-radius:.7rem; padding:.65rem .85rem; font-size:.85rem; line-height:1.35; max-width:88%}
+  .bub.me{align-self:flex-end; background:var(--ink); color:#fff; border-bottom-right-radius:.2rem}
+  .bub.ai{align-self:flex-start; background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:.2rem}
+  .bub .who{font-family:var(--mono); font-size:.6rem; opacity:.65; display:block; margin-bottom:.2rem; text-transform:uppercase; letter-spacing:.05em}
+  .truth{display:flex; align-items:center; gap:.5rem; font-family:var(--mono); font-size:.74rem; color:var(--flag);
+    border-top:1px dashed var(--border-strong); padding-top:.65rem}
+
+  @media print{
+    body{display:block; background:#fff}
+    .stage{width:100%; height:auto; box-shadow:none}
+    .slide{position:relative; opacity:1!important; visibility:visible!important; transform:none!important;
+      page-break-after:always; aspect-ratio:16/9}
+    .nav{position:absolute}
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- ════════════════ SLIDE 1 · PROBLEM ════════════════ -->
+  <section class="slide active aura" data-i="0">
+    <div class="chrome-top">
+      <span class="brand">
+        <svg class="wmark" width="22" height="22" viewBox="0 0 108 108"><rect width="108" height="108" rx="28" fill="#157a44"/><g fill="#fff"><rect x="12" y="43" width="10" height="22" rx="5" fill-opacity=".78"/><rect x="30" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="48" y="17" width="10" height="74" rx="5"/><rect x="66" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="84" y="40" width="10" height="28" rx="5" fill-opacity=".78"/></g></svg>
+        <span class="wm">Greenroom</span>
+      </span>
+      <span class="slabel">01 — The problem</span>
+    </div>
+
+    <div class="col grow" style="justify-content:center; gap:1.5rem">
+      <div class="row" style="gap:3rem; align-items:center">
+        <div class="col" style="flex:1.1; gap:1.1rem">
+          <span class="eyebrow">The problem</span>
+          <h1 class="title font-display">High-stakes conversations are won or lost <span class="accent">before you walk in.</span></h1>
+          <p class="lead" style="max-width:34rem">Interviews, investor pitches, negotiations — the talks that decide careers and deals. People rehearse in their head, or with a friend who can&rsquo;t push back.</p>
+          <p class="body" style="max-width:33rem">Generic AI voice tools roleplay fluently — but where facts matter, they <b style="color:var(--ink)">invent</b> the details about the company across the table. So they miss the single most common way people lose: <b style="color:var(--ink)">confidently saying something false.</b></p>
+          <div class="row gap-s" style="flex-wrap:wrap; padding-top:.2rem">
+            <span class="pill">Interviews</span>
+            <span class="pill">Investor pitches</span>
+            <span class="pill">Negotiations</span>
+            <span class="pill">The personal talks you dread</span>
+          </div>
+        </div>
+
+        <!-- the generic-AI failure, visualized -->
+        <div class="card chatcard" style="flex:.85; max-width:24rem">
+          <span class="kicker mono" style="font-size:.66rem; letter-spacing:.08em; text-transform:uppercase">A generic AI voice tool</span>
+          <div class="bub me"><span class="who">Candidate</span>Stripe&rsquo;s valued around $65 billion, right?</div>
+          <div class="bub ai"><span class="who">Generic AI</span>That&rsquo;s right — about $65B. Great, let&rsquo;s move on. ✓</div>
+          <div class="truth">Actually $159B (Feb 2026). It agreed with the bluff.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span class="sponsor">Megathon 2026 · <b>Cala.ai</b> + <b>Vapi</b></span>
+      <div class="dots"></div>
+      <span class="counter">01 / 05</span>
+    </div>
+  </section>
+
+  <!-- ════════════════ SLIDE 2 · PRODUCT OVERVIEW ════════════════ -->
+  <section class="slide" data-i="1">
+    <div class="chrome-top">
+      <span class="brand">
+        <svg class="wmark" width="22" height="22" viewBox="0 0 108 108"><rect width="108" height="108" rx="28" fill="#157a44"/><g fill="#fff"><rect x="12" y="43" width="10" height="22" rx="5" fill-opacity=".78"/><rect x="30" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="48" y="17" width="10" height="74" rx="5"/><rect x="66" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="84" y="40" width="10" height="28" rx="5" fill-opacity=".78"/></g></svg>
+        <span class="wm">Greenroom</span>
+      </span>
+      <span class="slabel">02 — The product</span>
+    </div>
+
+    <div class="col grow" style="justify-content:center; gap:1.6rem">
+      <div class="col gap-m">
+        <span class="eyebrow">The product</span>
+        <h1 class="title font-display" style="font-size:clamp(1.8rem,3.5vw,3rem)">A voice-native room to practice <span class="accent">any hard conversation</span> — out loud, against someone who pushes back.</h1>
+        <p class="lead" style="max-width:50rem">You pick the conversation. A voice agent plays the person across the table. Where facts matter, it&rsquo;s grounded in cited sources and catches you when you bluff. Then it scores how you carried it.</p>
+      </div>
+
+      <!-- the flow -->
+      <div class="card tint row center" style="padding:1.2rem 1.6rem">
+        <div class="step"><span class="n">01</span><h4>Pick</h4><span class="body">Choose the conversation and, where it matters, a real target to be grilled on.</span></div>
+        <span class="arrow">→</span>
+        <div class="step"><span class="n">02</span><h4>Spar &nbsp;·&nbsp; <span style="color:var(--verified-deep)">voice</span></h4><span class="body">A live spoken rehearsal. It probes, objects, and pushes back in real time.</span></div>
+        <span class="arrow">→</span>
+        <div class="step"><span class="n">03</span><h4>Debrief</h4><span class="body">A scorecard of how you carried it — every bluff flagged with its source.</span></div>
+      </div>
+
+      <!-- the two tiers -->
+      <div class="row gap-l">
+        <div class="card grounded grow col gap-s">
+          <div class="row between center"><h4 class="font-display" style="font-size:1.15rem">Grounded conversations</h4><span class="chip-cited">★ the moat</span></div>
+          <p class="body">Where the other side can call your bluff on a fact — interviews, pitches, fact-backed negotiation. Grounded in <b style="color:var(--ink)">verified, cited data</b>. <b style="color:var(--ink)">Nobody else&rsquo;s voice sim has a ground-truth layer.</b></p>
+        </div>
+        <div class="card grow col gap-s">
+          <div class="row between center"><h4 class="font-display" style="font-size:1.15rem">Relational conversations</h4><span class="pill">range</span></div>
+          <p class="body">Where there&rsquo;s no fact to check — hard feedback, asking for a raise, breaking bad news. The agent pushes back emotionally; the debrief coaches delivery.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span class="sponsor">Megathon 2026 · <b>Cala.ai</b> + <b>Vapi</b></span>
+      <div class="dots"></div>
+      <span class="counter">02 / 05</span>
+    </div>
+  </section>
+
+  <!-- ════════════════ SLIDE 3 · FEATURE SUMMARY ════════════════ -->
+  <section class="slide" data-i="2">
+    <div class="chrome-top">
+      <span class="brand">
+        <svg class="wmark" width="22" height="22" viewBox="0 0 108 108"><rect width="108" height="108" rx="28" fill="#157a44"/><g fill="#fff"><rect x="12" y="43" width="10" height="22" rx="5" fill-opacity=".78"/><rect x="30" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="48" y="17" width="10" height="74" rx="5"/><rect x="66" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="84" y="40" width="10" height="28" rx="5" fill-opacity=".78"/></g></svg>
+        <span class="wm">Greenroom</span>
+      </span>
+      <span class="slabel">03 — How it works</span>
+    </div>
+
+    <div class="col grow" style="justify-content:center; gap:1.5rem">
+      <div class="col gap-s">
+        <span class="eyebrow">What makes it work</span>
+        <h1 class="title font-display" style="font-size:clamp(1.8rem,3.5vw,3rem)">Three things, one principle: <span class="accent">ground before, score after.</span></h1>
+      </div>
+
+      <div class="row gap-l">
+        <div class="card feat">
+          <span class="fn">01</span>
+          <h4>Voice-native</h4>
+          <p class="body">A real spoken rehearsal, not a chatbox. You talk; it listens, interrupts, and pushes back like the person across the table — ~0.2s response.</p>
+          <span class="pill" style="width:fit-content; margin-top:.2rem">Vapi · Groq Llama-70B</span>
+        </div>
+        <div class="card feat grounded">
+          <span class="fn">02</span>
+          <h4>Grounded where facts matter</h4>
+          <p class="body">A cited fact pack is pulled <b style="color:var(--ink)">before</b> the call and injected as ground truth. Bluff, and it catches you — then shows the receipt: a link to the real filing or record.</p>
+          <span class="chip-cited" style="margin-top:.2rem">★ Cala.ai cited sources</span>
+        </div>
+        <div class="card feat">
+          <span class="fn">03</span>
+          <h4>Scored afterward</h4>
+          <p class="body">A post-call debrief: a readiness grade and capability radar, plus every claim reconstructed and checked — <span class="mono" style="color:var(--ink)">N of M verified</span>, each one linked.</p>
+          <span class="pill" style="width:fit-content; margin-top:.2rem">GLM-5.2 debrief</span>
+        </div>
+      </div>
+
+      <div class="card tint row center between" style="padding:.85rem 1.3rem">
+        <span class="body"><b style="color:var(--ink)">The architecture is the edge.</b> Live models invent company facts — so we never fact-check live. We pre-fetch cited truth, ground the agent, and run the rigorous check post-call.</span>
+        <span class="mono" style="font-size:.72rem; color:var(--verified-deep); white-space:nowrap">grounding before · scoring after</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span class="sponsor">Megathon 2026 · <b>Cala.ai</b> + <b>Vapi</b></span>
+      <div class="dots"></div>
+      <span class="counter">03 / 05</span>
+    </div>
+  </section>
+
+  <!-- ════════════════ SLIDE 4 · LIVE INTERVIEW (ZOOM-IN) ════════════════ -->
+  <section class="slide" data-i="3">
+    <div class="chrome-top">
+      <span class="brand">
+        <svg class="wmark" width="22" height="22" viewBox="0 0 108 108"><rect width="108" height="108" rx="28" fill="#157a44"/><g fill="#fff"><rect x="12" y="43" width="10" height="22" rx="5" fill-opacity=".78"/><rect x="30" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="48" y="17" width="10" height="74" rx="5"/><rect x="66" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="84" y="40" width="10" height="28" rx="5" fill-opacity=".78"/></g></svg>
+        <span class="wm">Greenroom</span>
+      </span>
+      <span class="slabel">04 — Live, in the room</span>
+    </div>
+
+    <div class="col grow" style="justify-content:center; gap:1rem">
+      <div class="col gap-s">
+        <span class="eyebrow">A real call · the IB interview</span>
+        <h1 class="title font-display" style="font-size:clamp(1.6rem,3vw,2.5rem)">She says <span class="mono" style="font-size:.82em">$65B</span>. The room knows it&rsquo;s <span class="accent">$159B</span> — and shows the receipt.</h1>
+      </div>
+
+      <div class="row gap-l" style="align-items:stretch">
+        <!-- interviewer "video call" stage -->
+        <div class="stage-frame" style="flex:.82">
+          <div class="row center between">
+            <div class="row center gap-s">
+              <div class="avatar">MD</div>
+              <div class="col" style="gap:.15rem">
+                <span class="font-display" style="font-size:1rem">Managing Director</span>
+                <span class="mono" style="font-size:.68rem; color:var(--muted)">Investment Banking · live</span>
+              </div>
+            </div>
+            <span class="orb" title="speaking"></span>
+          </div>
+          <div class="chip-cited" style="width:fit-content">★ grounded in 19 cited facts</div>
+          <div class="row center gap-s" style="margin-top:auto; border-top:1px solid var(--border); padding-top:.7rem">
+            <span class="mono" style="font-size:.66rem; color:var(--muted)">● rec 04:12</span>
+            <span class="grow"></span>
+            <span class="pill" style="font-size:.66rem">mute</span>
+            <span class="pill" style="font-size:.66rem; color:var(--flag); border-color:color-mix(in srgb,var(--flag) 35%,transparent)">End interview</span>
+          </div>
+        </div>
+
+        <!-- live transcript + the catch -->
+        <div class="card grow col gap-s" style="flex:1.18">
+          <span class="mono" style="font-size:.64rem; color:var(--muted); letter-spacing:.06em; text-transform:uppercase">Live transcript</span>
+          <div class="tline"><span class="trole">MD</span><span class="ttext">&ldquo;And how would you frame its scale for an investor?&rdquo;</span></div>
+          <div class="tline"><span class="trole">You</span><span class="ttext flag">&ldquo;It&rsquo;s private — last I checked, valued around <b>$65 billion</b> after a down round.&rdquo;</span></div>
+          <div class="tline"><span class="trole">MD</span><span class="ttext">&ldquo;You sure about that number? Walk me through it.&rdquo;</span></div>
+
+          <div class="flagcard" style="margin-top:.2rem">
+            <div class="ftop"><span style="font-weight:600">⚑ Bluff caught · high</span><span class="grow"></span><span>doubled-down</span></div>
+            <span class="fcorrect">Most recent valuation is <b>$159B</b> (Feb 2026 tender). $65B was a 2023 employee tender — not the latest.</span>
+            <a class="src" href="https://finance.yahoo.com/news/stripe-valuation-jumps-159-billion-131258707.html">finance.yahoo.com — Stripe valuation jumps to $159B</a>
+          </div>
+        </div>
+
+        <!-- debrief readiness -->
+        <div class="col gap-s" style="flex:.5; justify-content:center">
+          <div class="scorebadge">
+            <span class="s">readiness</span>
+            <span class="g">C–</span>
+            <span class="s">45 / 100</span>
+          </div>
+          <p class="body" style="font-size:.78rem; text-align:center">2 bluffs caught,<br/><b style="color:var(--ink)">both sourced.</b></p>
+        </div>
+      </div>
+
+      <p class="kicker" style="font-size:.78rem">Pre-fetched cited fact pack → injected into the live agent → flagged in the post-call debrief. <b style="color:var(--ink)">No live fact-checking</b> — that&rsquo;s what keeps it fast and grounded.</p>
+    </div>
+
+    <div class="nav">
+      <span class="sponsor">Megathon 2026 · <b>Cala.ai</b> + <b>Vapi</b></span>
+      <div class="dots"></div>
+      <span class="counter">04 / 05</span>
+    </div>
+  </section>
+
+  <!-- ════════════════ SLIDE 5 · SUMMARY ════════════════ -->
+  <section class="slide aura" data-i="4">
+    <div class="chrome-top">
+      <span class="brand">
+        <svg class="wmark" width="22" height="22" viewBox="0 0 108 108"><rect width="108" height="108" rx="28" fill="#157a44"/><g fill="#fff"><rect x="12" y="43" width="10" height="22" rx="5" fill-opacity=".78"/><rect x="30" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="48" y="17" width="10" height="74" rx="5"/><rect x="66" y="29" width="10" height="50" rx="5" fill-opacity=".92"/><rect x="84" y="40" width="10" height="28" rx="5" fill-opacity=".78"/></g></svg>
+        <span class="wm">Greenroom</span>
+      </span>
+      <span class="slabel">05 — The close</span>
+    </div>
+
+    <div class="col grow" style="justify-content:center; gap:1.5rem">
+      <div class="col gap-m">
+        <span class="eyebrow">Why this wins</span>
+        <h1 class="title font-display">Walk into the conversation <span class="accent">ready.</span></h1>
+        <p class="lead" style="max-width:46rem">Greenroom is a voice-native room to practice any hard conversation — grounded in cited sources where facts matter, scored when you&rsquo;re done. The bluff-catch is the moat: <b style="color:var(--ink)">no other voice sim has a ground-truth layer.</b></p>
+      </div>
+
+      <div class="row gap-l">
+        <div class="col gap-m grow">
+          <div class="check"><span class="mk">✓</span><span><b style="color:var(--ink)">Built end-to-end.</b> Pick → live voice spar → sourced, scored debrief. Live browser call verified.</span></div>
+          <div class="check"><span class="mk">✓</span><span><b style="color:var(--ink)">Both sponsor prizes, one build.</b> Cala.ai is the cited ground truth; Vapi is the voice.</span></div>
+          <div class="check"><span class="mk">✓</span><span><b style="color:var(--ink)">A category, not a one-off.</b> New conversations are a config entry behind a <span class="mono">grounded</span> flag — the vision scales.</span></div>
+        </div>
+        <div class="card grounded col gap-s" style="flex:.85; justify-content:center">
+          <span class="kicker mono" style="font-size:.66rem; text-transform:uppercase; letter-spacing:.08em">The one beat that lands</span>
+          <p class="lead" style="font-size:1.05rem">A candidate says the &ldquo;obvious&rdquo; thing a generic AI would agree with. Greenroom catches it — with a dated source link.</p>
+          <span class="src">That&rsquo;s the moment Cala beats GPT-alone.</span>
+        </div>
+      </div>
+
+      <div class="darkband">
+        <div class="col" style="gap:.3rem">
+          <span class="font-display" style="font-size:1.5rem">Practice the conversation before it counts.</span>
+          <span style="color:rgba(255,255,255,.55); font-size:.82rem; font-family:var(--mono)">Voice-native rehearsal · grounded in cited sources · scored when you&rsquo;re done.</span>
+        </div>
+        <span class="chip-cited" style="background:rgba(28,138,78,.18); color:#7ee2a8; border-color:rgba(28,138,78,.4)">★ Greenroom</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span class="sponsor">Megathon 2026 · <b>Cala.ai</b> + <b>Vapi</b></span>
+      <div class="dots"></div>
+      <span class="counter">05 / 05</span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const dotsBars = [...document.querySelectorAll('.dots')];
+  let i = 0;
+
+  // build dot indicators inside every slide's nav
+  dotsBars.forEach(bar => {
+    slides.forEach((_, idx) => {
+      const d = document.createElement('span');
+      d.className = 'ndot'; d.dataset.go = idx;
+      bar.appendChild(d);
+    });
+  });
+
+  function go(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    document.querySelectorAll('.dots').forEach(bar =>
+      [...bar.children].forEach((d, idx) => d.classList.toggle('on', idx === i)));
+  }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){ e.preventDefault(); go(i+1); }
+    else if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); go(i-1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(slides.length-1);
+  });
+  document.addEventListener('click', e => {
+    const dot = e.target.closest('.ndot');
+    if (dot){ go(+dot.dataset.go); return; }
+    // click right half = next, left half = prev
+    if (e.target.closest('a')) return;
+    go(e.clientX > window.innerWidth/2 ? i+1 : i-1);
+  });
+  go(0);
+</script>
+</body>
+</html>
